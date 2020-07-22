@@ -55,4 +55,11 @@ z.backward(torch.tensor([[.25, .25], [.25, .25]]), retain_graph=True)
 print(x.grad)
 print('————————————')
 
+# 对tensor直接操作会被记录到grad中，如果想要修改tensor而不记录到grad中
+# 可以使用tensor.data，直接修改tensor的内容，下面的例子中x.grad_fn为None
+x = torch.ones(2, 2, requires_grad=True)
+x.data *= 10
+print(x)
+print(x.grad_fn)
+
 # 有些文章可能会提到Variable类型，这个类型在2018.4之后已经和tensor合并
