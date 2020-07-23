@@ -29,3 +29,23 @@ def data_iter(batch_size, features, labels):
         # the function with yield will become a generator not a function
         # every time we call next() to it, will return a yield's content
         yield torch.index_select(features, 0, j), torch.index_select(labels, 0, j)
+
+
+def get_fashion_mnist_labels(labels):
+    """
+    change the label index to real label name
+
+    Parameters
+    ----------
+    labels : [int list]
+        the label indices of FashionMnistDataset, should use loop to load
+
+    Returns
+    -------
+    [string]
+        return the real name of the data index
+    """
+    text_labels = ['t-shirt', 'trouser', 'pullover', 'dress',
+                   'coat', 'sandal', 'shirt', 'sneaker', 'bag', 'ankle boot']
+    # for every labels, change it to text in loop
+    return [text_labels[int(i)] for i in labels]
