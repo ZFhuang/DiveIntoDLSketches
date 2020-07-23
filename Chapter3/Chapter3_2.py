@@ -1,7 +1,7 @@
 # coding=utf-8
 
 """
-这一节从零开始实现一个线性回归训练
+这一节从零开始手动实现一个线性回归训练
 """
 
 # 导入自己的函数包d2lzh_pytorch，注意要先将目标包的路径添加到系统路径中
@@ -89,5 +89,5 @@ for ep in range(epochs):
     print('epoch %d, loss %f' % (ep+1, train_l.mean().item()))
 
 #输出最终学习到的参数
-print(real_w,'\n', w)
-print(real_b,'\n',b)
+print(real_w, '\n', w)
+print(real_b, '\n', b)
