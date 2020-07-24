@@ -69,7 +69,9 @@ def train_ch3(net, train_iter, test_iter, loss, num_epochs, batch_size,
     lr : [float], optional
         learning rate, by default None
     optimizer : [function], optional
-        the function to decrease the gradient, is useless now, by default None
+        the function to decrease the gradient, if you have a optimizer, you 
+        don't need to input the params and lr before but input them directly 
+        to the optimizer, by default None
     """
     for e in range(num_epochs):
         # init
