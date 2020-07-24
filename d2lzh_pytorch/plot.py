@@ -36,10 +36,14 @@ def show_fashion_mnist(images, labels):
     use_svg_display()
     # the '_' here means we don't need that parameter
     # here init a figure to plot images
-    _, figs = plt.subplot(1, len(images), figsize=(12, 12))
+    _, figs = plt.subplots(1, len(images), figsize=(12, 12))
     for f, img, lbl in zip(figs, images, labels):
+        # show the image
         f.imshow(img.view(28, 28).numpy())
+        # set title
         f.set_title(lbl)
+        # hide the x and y axis
         f.axes.get_xaxis().set_visible(False)
         f.axes.get_yaxis().set_visible(False)
+    # show the plot figure
     plt.show()
