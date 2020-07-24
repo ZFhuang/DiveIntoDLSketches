@@ -3,7 +3,7 @@ import torch
 
 def linreg(X, w, b):
     """
-    return the matrix multiply result of X*w+b
+    Return the matrix multiply result of X*w+b
 
     Parameters
     ----------
@@ -25,7 +25,7 @@ def linreg(X, w, b):
 
 def squared_loss(y_hat, y):
     """
-    compute the squared loss of y_hat and y
+    Compute the squared loss of y_hat and y
 
     Parameters
     ----------
@@ -48,9 +48,9 @@ def squared_loss(y_hat, y):
 
 def sgd(params, learning_rate, batch_size):
     """
-    the optimization function: Stochastic gradient descent (SGD)
-    track the params' gradient and multiplied by the learning rate and then divided
-    by the batch_size to gain the real changing value of params
+    The optimization function: Stochastic gradient descent (SGD)
+    track the params' gradient and multiplied by the learning rate and then
+    divided by the batch_size to gain the real changing value of params
 
     Parameters
     ----------

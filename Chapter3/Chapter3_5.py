@@ -45,18 +45,9 @@ for i in range(10):
 # 将这个得到的特征和标签转换为图片绘制
 # plot.show_fashion_mnist(X, data_process.get_fashion_mnist_labels(y))
 
-# 然后和之前一样再尝试一下batch读取，由于数据集比较大batch也设置大一点加快epoch速度
-batch_size = 256
-# 根据当前平台调整是否进行多线程处理
-if sys.platform.startswith('win'):
-    num_worker = 0
-else:
-    num_worker = 4
-# 用dataloader进行数据读取
-train_iter = torch.utils.data.DataLoader(
-    mnist_train, batch_size=batch_size, shuffle=True, num_workers=num_worker)
-test_iter = torch.utils.data.DataLoader(
-    mnist_test, batch_size=batch_size, shuffle=True, num_workers=num_worker)
+# 将读取数据的流程封装到load_data_fashion_mnist中使用
+train_iter, _ = data_process.load_data_fashion_mnist(256)
+
 # 测试下读取完数据所需的时间
 start = time.time()
 for X, y in train_iter:

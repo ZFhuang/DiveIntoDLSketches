@@ -1,5 +1,7 @@
 import random
 import torch
+import sys
+import torchvision
 
 
 def data_iter(batch_size, features, labels):
@@ -33,7 +35,7 @@ def data_iter(batch_size, features, labels):
 
 def get_fashion_mnist_labels(labels):
     """
-    change the label index to real label name
+    Change the label index to real label name
 
     Parameters
     ----------
@@ -49,3 +51,63 @@ def get_fashion_mnist_labels(labels):
                    'coat', 'sandal', 'shirt', 'sneaker', 'bag', 'ankle boot']
     # for every labels, change it to text in loop
     return [text_labels[int(i)] for i in labels]
+
+
+def load_data_fashion_mnist(batch_size):
+    """
+    Load trainset and testset with batch_size settings
+
+    Parameters
+    ----------
+    batch_size : [int]
+        the size of a batch
+
+    Returns
+    -------
+    [tensor,tensor]
+        the train_iter and test_iter of dataset
+    """
+    # get or download the dataset
+    mnist_train = torchvision.datasets.FashionMNIST(
+        root=r"./Datasets", train=True,
+        download=True, transform=torchvision.transforms.ToTensor())
+    mnist_test = torchvision.datasets.FashionMNIST(
+        root=r"./Datasets", train=False,
+        download=True, transform=torchvision.transforms.ToTensor())
+    # multi process settings
+    if sys.platform.startswith('win'):
+        num_worker = 0
+    else:
+        num_worker = 4
+    # load data by DataLoader
+    train_iter = torch.utils.data.DataLoader(
+        mnist_train, batch_size=batch_size, shuffle=True, num_workers=num_worker)
+    test_iter = torch.utils.data.DataLoader(
+        mnist_test, batch_size=batch_size, shuffle=True, num_workers=num_worker)
+    return train_iter, test_iter
+
+
+def evaluate_accuracy(data_iter, net):
+    """
+    Compute the accuracy of a net
+
+    Parameters
+    ----------
+    data_iter : [producer]
+        using for-loop inside to get the X and y from dataset
+    net : [function]
+        input the X and get the y_hat, compare with y to get the accuracy
+
+    Returns
+    -------
+    [float]
+        return the accuracy
+    """
+    acc_sum, n = 0.0, 0
+    for X, y in data_iter:
+        # add the correct items together
+        acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
+        # refresh their number
+        n += y.shape[0]
+    # compute its average
+    return acc_sum/n
