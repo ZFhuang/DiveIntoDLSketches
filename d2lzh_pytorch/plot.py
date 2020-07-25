@@ -47,3 +47,28 @@ def show_fashion_mnist(images, labels):
         f.axes.get_yaxis().set_visible(False)
     # show the plot figure
     plt.show()
+
+
+def xyplot(x_vals,y_vals,name):
+    """
+    Draw a two-dimensional chart of xy
+
+    Parameters
+    ----------
+    x_vals : [tensor]
+        the x values to be plot horizontal
+    y_vals : [tensor]
+        the y values to be plot vertical
+    name : [string]
+        the string that will show in the y axis label
+    """
+    # set the figure's size
+    set_figsize(figsize=(5,2.5))
+    # detach() is used to get a variable from the current calculation graph
+    # in which this variable is the not gradient tracking version
+    plt.plot(x_vals.detach().numpy(),y_vals.detach().numpy())
+    # set the constant x axis label
+    plt.xlabel('x')
+    # combine and set the y axis label
+    plt.ylabel(name+'(x)')
+    plt.show()
