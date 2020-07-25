@@ -16,9 +16,9 @@ import matplotlib.pylab as plt
 # 先写一个可以绘制xy值的绘图函数xyplot然后使用
 # 这里的x值是从-8到8以0.1为间隔排列出来的tensor
 # 这里通过调用relu函数直接得到x经过relu处理后的值并作为y使用
-x=torch.arange(-8.0,8.0,0.1,requires_grad=True)
+x = torch.arange(-8.0, 8.0, 0.1, requires_grad=True)
 # relu函数也就是只取正值，负值取0的函数, ReLu(x)=max(x,0)
-y=x.relu()
+y = x.relu()
 # plot.xyplot(x,y,'relu')
 # 然后试着对这个relu求导并展示，由于x函数y=x,斜率为1，其余情况为0，因此导数有明显断层
 y.sum().backward()
@@ -26,7 +26,7 @@ y.sum().backward()
 
 # Sigmoid函数，(0,1)
 # 以前很常用，现在被ReLU取代，特点是负值趋向0，正值趋向1，0附近接近线性变换，中点1/2
-y=x.sigmoid()
+y = x.sigmoid()
 # plot.xyplot(x,y,'sigmoid')
 # Sigmoid的导数形状类似正态分布，顶点为(0,0.25)
 x.grad.zero_()
@@ -35,7 +35,7 @@ y.sum().backward()
 
 # Tanh函数，(-1,1)
 # 是形状类似sigmoid的函数，但是这个函数0的时候结果是0，基于原点对称
-y=x.tanh()
+y = x.tanh()
 # plot.xyplot(x,y,'tanh')
 # 其导数也类似sigmoid的结果，但是这次顶点是(0,1)
 x.grad.zero_()

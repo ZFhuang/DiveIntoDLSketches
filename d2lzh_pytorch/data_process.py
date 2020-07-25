@@ -10,12 +10,12 @@ def data_iter(batch_size, features, labels):
 
     Parameters
     ----------
-    batch_size : int
+    batch_size : [int]
         the batch size which you want to return
-    features : tensor
-        the features of the data inputed, [num*featureNum]
-    labels : tensor
-        the features of the data inputed, [num*1 size]
+    features : [tensor]
+        the features of the data inputed, num*featureNum
+    labels : [tensor]
+        the features of the data inputed, num*1 size
     """
     # the length of labels infer the number of all samples
     num = len(labels)
@@ -64,7 +64,7 @@ def load_data_fashion_mnist(batch_size):
 
     Returns
     -------
-    [tensor,tensor]
+    [tensor, tensor]
         the train_iter and test_iter of dataset
     """
     # get or download the dataset

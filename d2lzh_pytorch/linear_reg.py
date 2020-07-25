@@ -7,16 +7,16 @@ def linreg(X, w, b):
 
     Parameters
     ----------
-    X : tensor
+    X : [tensor]
         the variablies of the question
-    w : tensor
+    w : [tensor]
         the weight of this linear reg
-    b : tensor
+    b : [tensor]
         the bias of this linear reg
 
     Returns
     -------
-    tensor
+    [tensor]
         the matrix multiply result of X*w+b
     """
     # mm means matrix multiply
@@ -29,14 +29,14 @@ def squared_loss(y_hat, y):
 
     Parameters
     ----------
-    y_hat : tensor
+    y_hat : [tensor]
         the predictive value of the learning model
-    y : tensor
+    y : [tensor]
         the real value of the learning model
 
     Returns
     -------
-    tensor
+    [tensor]
         the squared loss of y_hat and y
     """
     # 'y_hat-y.view(y_hat.size())' is the original losses
@@ -54,11 +54,11 @@ def sgd(params, learning_rate, batch_size):
 
     Parameters
     ----------
-    params : tensor
+    params : [tensor]
         the w and b of the model to be learned
-    learning_rate : float
+    learning_rate : [float]
         the value of the params' changing speed
-    batch_size : int
+    batch_size : [int]
         the number of elements of a batch
     """
     for p in params:
