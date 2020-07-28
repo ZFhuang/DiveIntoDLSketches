@@ -34,7 +34,7 @@ print(features[:2], poly_features[:2], labels[:2])
 # 然后定义一个绘制对数尺度图的函数semilogy并且训练模型后绘制查看
 num_epochs, loss = 100, torch.nn.MSELoss()
 
-# 写一个训练并进行绘制的函数
+# 写一个训练并进行绘制的函数fit_and_plot
 
 
 def fit_and_plot(train_features, test_features, train_labels, test_labels):
