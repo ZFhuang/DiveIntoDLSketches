@@ -6,7 +6,7 @@ sys.path.append(r".")
 import numpy as np
 import torch
 from d2lzh_pytorch import data_process
-from d2lzh_pytorch import softmax
+from d2lzh_pytorch import train
 
 """
 这一节从零开始实现了一个多层感知机
@@ -51,5 +51,5 @@ loss = torch.nn.CrossEntropyLoss()
 
 # 用之前定义好的train_ch3函数进行训练
 num_epochs, lr = 5, 100.0
-softmax.train_ch3(net, train_iter, test_iter, loss,
+train.train_ch3(net, train_iter, test_iter, loss,
                   num_epochs, batch_size, params, lr)

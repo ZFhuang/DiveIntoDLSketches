@@ -8,6 +8,7 @@ import sys
 sys.path.append(r'.')
 from d2lzh_pytorch import data_process
 from d2lzh_pytorch import softmax
+from d2lzh_pytorch import train
 from d2lzh_pytorch import plot
 
 
@@ -89,7 +90,7 @@ epoch_num = 5
 # 学习率
 learning_rate = 0.03
 # 调用写好的train_ch3对这个softmax回归进行训练，注意这里带入了交叉熵作为代价函数
-softmax.train_ch3(net, train_iter, test_iter, cross_entropy,
+train.train_ch3(net, train_iter, test_iter, cross_entropy,
                   epoch_num, batch_size, [W, b], learning_rate)
 
 # 最后对训练好的网络来实际预测一下看看真实的效果

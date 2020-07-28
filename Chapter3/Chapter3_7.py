@@ -5,7 +5,7 @@ import sys
 sys.path.append(r".")
 from d2lzh_pytorch import data_process
 from d2lzh_pytorch import layers
-from d2lzh_pytorch import softmax
+from d2lzh_pytorch import train
 from collections import OrderedDict
 import torch.nn as nn
 import numpy as np
@@ -63,5 +63,5 @@ optim = torch.optim.SGD(net.parameters(), learning_rate)
 # 开始训练模型,使用3.6编写的训练模板
 num_epochs = 5
 # 注意这里由于有了优化器所以不需要在这里输入网络参数和学习率了
-softmax.train_ch3(net, train_iter, test_iter, loss,
+train.train_ch3(net, train_iter, test_iter, loss,
                   num_epochs, batch_size, None, None, optim)
