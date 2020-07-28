@@ -63,12 +63,47 @@ def xyplot(x_vals,y_vals,name):
         the string that will show in the y axis label
     """
     # set the figure's size
-    set_figsize(figsize=(5,2.5))
+    set_figsize(figsize=(5, 2.5))
     # detach() is used to get a variable from the current calculation graph
     # in which this variable is the not gradient tracking version
-    plt.plot(x_vals.detach().numpy(),y_vals.detach().numpy())
+    plt.plot(x_vals.detach().numpy(), y_vals.detach().numpy())
     # set the constant x axis label
     plt.xlabel('x')
     # combine and set the y axis label
     plt.ylabel(name+'(x)')
+    plt.show()
+
+
+def semilogy(x_vals, y_vals, x_label, y_label, x2_vals=None, y2_vals=None,
+             legend=None, figsize=(3.5, 2.5)):
+    """
+    plot data into a half log figure
+
+    Parameters
+    ----------
+    x_vals : [tensor]
+        the first graph
+    y_vals : [tensor]
+        the first graph
+    x_label : [string]
+        x axis' label
+    y_label : [string]
+        y axis' label
+    x2_vals : [tensor], optional
+        the second graph, by default None
+    y2_vals : [tensor], optional
+        the second graph, by default None
+    legend : [legend], optional
+        icons represent the data, by default None
+    figsize : [tuple], optional
+        size of the figure, by default (3.5, 2.5)
+    """
+    set_figsize(figsize)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.semilogy(x_vals, y_vals)
+    if x2_vals and y2_vals:
+        plt.semilogy(x2_vals, y2_vals, linestyle=':')
+        # legend means icons
+        plt.legend(legend)
     plt.show()
