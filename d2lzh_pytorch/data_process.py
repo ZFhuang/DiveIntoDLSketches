@@ -105,8 +105,22 @@ def evaluate_accuracy(data_iter, net):
     """
     acc_sum, n = 0.0, 0
     for X, y in data_iter:
-        # add the correct items together
-        acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
+        # if the net is a network module
+        if isinstance(net, torch.nn.Module):
+            # use eval mode to close dropout
+            net.eval()
+            # add the correct items together
+            acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
+            # back to the train mode
+            net.train()
+        else:
+            # if the net has a parameter called 'is_training'
+            # this selection is for our DIY function
+            if('is_training' in net.__code__.co_varnames):
+                acc_sum += (net(X, is_training=False).argmax(dim=1)
+                            == y).float().sum().item()
+            else:
+                acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
         # refresh their number
         n += y.shape[0]
     # compute its average

@@ -49,7 +49,8 @@ def net(X):
 # 定义交叉熵损失的函数指针
 loss = torch.nn.CrossEntropyLoss()
 
-# 用之前定义好的train_ch3函数进行训练
+# 用之前定义好的train_ch3函数进行训练,这里学习率很高是因为需要乘上batch_size来稳住
+# 本质上是Pytorch算法loss求和和求平均导致的(P81)
 num_epochs, lr = 5, 100.0
 train.train_ch3(net, train_iter, test_iter, loss,
                   num_epochs, batch_size, params, lr)
