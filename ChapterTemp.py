@@ -6,7 +6,7 @@ sys.path.append(r".")
 from d2lzh_pytorch import *
 
 import torch
-from torch.nn import nn
+from torch import nn
 
 """
 这一节介绍了
