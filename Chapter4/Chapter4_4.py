@@ -83,7 +83,7 @@ print(net(x, 'linear3'))
 print('————————————————————————————')
 
 # 这里串联了两层
-net=nn.Sequential(
+net = nn.Sequential(
     # 字典层默认只应用了第一层
     MyDictDense(),
     # 列表层则完整前向传播了
