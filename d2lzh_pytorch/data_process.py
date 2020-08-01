@@ -86,7 +86,7 @@ def load_data_fashion_mnist(batch_size, resize=None, root=r"./Datasets"):
     # multi process settings
     # here looks like a little bug in Windows
     # if sys.platform.startswith('win'):
-    #     num_worker = 1
+    #     num_worker = 0
     # else:
     #     num_worker = 4
     num_worker =4

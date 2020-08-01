@@ -12,5 +12,10 @@ from torch import nn
 这一节介绍了
 """
 
+# 加上这个限定才能支持多线程读取
+if __name__ == "__main__":
+    # 设置计算设备，让计算在GPU上进行
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-print('————————————————————————————')
+
+    print('————————————————————————————')
