@@ -6,7 +6,6 @@ sys.path.append(r".")
 from d2lzh_pytorch import data_process
 from d2lzh_pytorch import train
 
-import time
 import torch
 from torch import nn, optim
 
@@ -14,7 +13,7 @@ from torch import nn, optim
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 """
-这一节开始进入神经网络真正的重点：卷积神经网络
+开始进入神经网络真正的重点：卷积神经网络.这一节介绍了最基础的卷积神经网络LeNet
 """
 
 

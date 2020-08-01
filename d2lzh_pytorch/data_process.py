@@ -53,7 +53,7 @@ def get_fashion_mnist_labels(labels):
     return [text_labels[int(i)] for i in labels]
 
 
-def load_data_fashion_mnist(batch_size):
+def load_data_fashion_mnist(batch_size, resize=None, root=r"./Datasets"):
     """
     Load trainset and testset with batch_size settings
 
@@ -61,29 +61,41 @@ def load_data_fashion_mnist(batch_size):
     ----------
     batch_size : [int]
         the size of a batch
+    resize : [int]
+        the resize value want to apply on fashion_mnist's dataset
+    root : [string]
+        the root path of the dataset
 
     Returns
     -------
     [tensor, tensor]
         the train_iter and test_iter of dataset
     """
+    trans = []
+    if resize:
+        trans.append(torchvision.transforms.Resize(size=resize))
+    trans.append(torchvision.transforms.ToTensor())
+
+    transform = torchvision.transforms.Compose(trans)
     # get or download the dataset
     mnist_train = torchvision.datasets.FashionMNIST(
-        root=r"./Datasets", train=True,
-        download=True, transform=torchvision.transforms.ToTensor())
+        root=root, train=True, download=True, transform=transform)
     mnist_test = torchvision.datasets.FashionMNIST(
-        root=r"./Datasets", train=False,
-        download=True, transform=torchvision.transforms.ToTensor())
+        root=root, train=False, download=True, transform=transform)
+
     # multi process settings
-    if sys.platform.startswith('win'):
-        num_worker = 0
-    else:
-        num_worker = 4
+    # here looks like a little bug in Windows
+    # if sys.platform.startswith('win'):
+    #     num_worker = 1
+    # else:
+    #     num_worker = 4
+    num_worker =4
     # load data by DataLoader
     train_iter = torch.utils.data.DataLoader(
         mnist_train, batch_size=batch_size, shuffle=True, num_workers=num_worker)
     test_iter = torch.utils.data.DataLoader(
         mnist_test, batch_size=batch_size, shuffle=True, num_workers=num_worker)
+    
     return train_iter, test_iter
 
 
