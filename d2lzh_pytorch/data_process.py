@@ -87,7 +87,8 @@ def load_data_fashion_mnist(batch_size):
     return train_iter, test_iter
 
 
-def evaluate_accuracy(data_iter, net):
+def evaluate_accuracy(data_iter, net, device=torch.device(
+        'cuda' if torch.cuda.is_available() else 'cpu')):
     """
     Compute the accuracy of a net
 
@@ -97,6 +98,8 @@ def evaluate_accuracy(data_iter, net):
         using for-loop inside to get the X and y from dataset
     net : [function]
         input the X and get the y_hat, compare with y to get the accuracy
+    device : [device]
+        the device want to calculate
 
     Returns
     -------
@@ -109,8 +112,9 @@ def evaluate_accuracy(data_iter, net):
         if isinstance(net, torch.nn.Module):
             # use eval mode to close dropout
             net.eval()
-            # add the correct items together
-            acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
+            # add the correct items together, change target to current device
+            acc_sum += (net(X.to(device)).argmax(dim=1) ==
+                        y.to(device)).float().sum().cpu().item()
             # back to the train mode
             net.train()
         else:
