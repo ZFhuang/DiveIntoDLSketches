@@ -47,3 +47,22 @@ def corr2d(X, K):
             # get the sub matrix and multiply to kernel then add up
             Y[i, j] = (X[i:i+h, j:j+w]*K).sum()
     return Y
+
+
+class GlobalAvgPool2d(nn.Module):
+    """
+    A pooling layer that use global average method which means calculate the of 
+    average every elements
+
+    Parameters
+    ----------
+    nn : [torch.nn]
+        the network module
+    """
+
+    def __init__(self):
+        super(GlobalAvgPool2d, self).__init__()
+
+    def forward(self, x):
+        # pay attention here, the kernal size is equal to the whole image size
+        return torch.nn.functional.avg_pool2d(x, kernel_size=x.size()[2:])

@@ -110,6 +110,7 @@ if __name__ == "__main__":
     print('————————————————————————————')
 
     # 训练的处理和AlexNet部分相同，即使缩小网络后耗时依然很长，看一个epoch即可
+    # 1 epoch = 213.2sec
     batch_size = 256
     train_iter, test_iter = data_process.load_data_fashion_mnist(
         batch_size, resize=224)

@@ -75,5 +75,6 @@ if __name__ == '__main__':
         batch_size, resize=224)
     lr, num_epochs = 0.001, 5
     optim = torch.optim.Adam(net.parameters(), lr=lr)
+    # 1 epoch = 190 sec
     train.train_ch5(net, train_iter, test_iter,
                     batch_size, optim, device, num_epochs)
