@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     # 实例化这个网络
     net = nn.Sequential(
-        # 一开始利用NiN块进行逐步缩小的卷积
+        # 一开始利用NiN块进行逐步缩小的卷积，提取各种尺度的特征
         NiN_block(1, 96, kernel_size=11, stride=4, padding=0),
         nn.MaxPool2d(kernel_size=3, stride=2),
         NiN_block(96, 256, kernel_size=5, stride=1, padding=2),
@@ -64,7 +64,8 @@ if __name__ == "__main__":
     print('————————————————————————————')
 
     # 训练的处理和AlexNet部分相同，但是这里选用更大的学习率，看一个epoch即可
-    # 1 epoch = sec
+    # 1 epoch = 291.7sec
+    # 由于网络很大这里不能再用太大的batch了，小显卡的显存顶不住
     batch_size = 128
     train_iter, test_iter = data_process.load_data_fashion_mnist(
         batch_size, resize=224)
