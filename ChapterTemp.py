@@ -3,10 +3,12 @@
 # 导入自己的函数包d2lzh_pytorch，注意要先将目标包的父路径添加到系统路径中
 import sys
 sys.path.append(r".")
-from d2lzh_pytorch import *
+from d2lzh_pytorch import data_process, train, layers
 
+import time
 import torch
-from torch import nn
+from torch import nn, optim
+import torch.nn.functional as F
 
 """
 这一节介绍了

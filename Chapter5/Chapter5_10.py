@@ -22,9 +22,10 @@ if __name__ == "__main__":
     # 从零开始实现批量归一化，首先是批量归一化层函数
     def batch_norm(is_training, X, gamma, beta, moving_mean, moving_var, eps,
                    momentum):
-        # 判断当前的情况
+        # 判断是测试还是训练
         if not is_training:
-            # 进行归一化，这里的moving_mean和moving_var是传进来的动态的参数
+            # 进行归一化，这里的moving_mean和moving_var是移动平均值和移动方差
+            # 在测试的时候使用这两个值作为真实参数的代替是为了用局部动态估计整体
             # 而eps是一个很小的非零值防止除法出错，这样计算出归一化后的X矩阵
             X_hat = (X-moving_mean)/torch.sqrt(moving_var+eps)
         else:
@@ -46,7 +47,7 @@ if __name__ == "__main__":
             # 同样计算出归一化后的X矩阵
             X_hat = (X-mean)/torch.sqrt(var+eps)
             # 然后这里利用动量方法预测出下一次调用的时候该有的平均值和方差
-            # 这些个移动平均值和移动方差是根据现在的平均值和方差预测的，并不是准确的
+            # 这些个动态平均值和动态方差是根据现在的平均值和方差预测的，并不是准确的
             moving_mean = momentum*moving_mean+(1.0-momentum)*mean
             moving_var = momentum*moving_var+(1.0-momentum)*var
         # 结果是另一个仿射变换，gamma和beta是这个归一化层自己可以学习的参数
@@ -106,7 +107,7 @@ if __name__ == "__main__":
         nn.Linear(84, 10)
     )
 
-    # 用老办法测试训练效果，可以看到比原先的LeNet效果好了很多
+    # 用老办法测试训练效果，batchnorm主要是让收敛变快，但对acc影响不大
     # 网络很小，大胆加大batch，1epoch = 8.8sec
     batch_size = 1024
     train_iter, test_iter = data_process.load_data_fashion_mnist(batch_size)

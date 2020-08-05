@@ -92,7 +92,7 @@ if __name__ == "__main__":
         nn.Linear(1024, 10)
     )
 
-    # 由于网络太大太复杂， 这里也使用96*96的尺寸来测试
+    # 这里先输出一下网络形状检查一下
     X = torch.rand(1, 1, 96, 96)
     for blk in net.children():
         X = blk(X)
