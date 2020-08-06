@@ -141,3 +141,145 @@ def evaluate_accuracy(data_iter, net, device=torch.device(
         n += y.shape[0]
     # compute its average
     return acc_sum/n
+
+
+def load_data_jay_lyrics(root=r"./Datasets"):
+    """
+    Load Jay's lyrics trainset
+
+    Parameters
+    ----------
+    root : [regexp], optional
+        the root folder, by default r"./Datasets"
+
+    Returns
+    -------
+    corpus_indices : [list]
+        the dataset that every characters has changed to index
+    char_to_idx : [list]
+        the 'character to index' dictionary of dataset
+    idx_to_char : [list]
+        the 'index to character' dictionary of dataset
+    vocab_size : [int]
+        the amount of non-repeating characters
+    """
+    # get the zip first
+    with zipfile.ZipFile([root, "/JaychouLyrics/jaychou_lyrics.txt.zip"]) as zin:
+        # unpack and load the file inside
+        with zin.open('jaychou_lyrics.txt') as f:
+            # load the corpus file as array
+            corpus_chars = f.read().decode('utf-8')
+    # replace the newline mark to blank mark
+    corpus_chars = corpus_chars.replace('\n', ' ').replace('\r', ' ')
+    # leave 10000 words to shrink the dataset
+    corpus_chars = corpus_chars[:10000]
+
+    # link all the non-repeating data to integer index
+    # then make an integer to character list
+    idx_to_char = list(set(corpus_chars))
+    char_to_idx = dict([(char, i) for i, char in enumerate(idx_to_char)])
+    vocab_size = len(char_to_idx)
+    # map characters to index and return
+    corpus_indices = [char_to_idx[char] for char in corpus_chars]
+    return corpus_indices, char_to_idx, idx_to_char, vocab_size
+
+
+def data_iter_random(corpus_indices, batch_size, num_steps, device=None):
+    """
+    Get a random sample batch of data from corpus_indices with batch_size
+
+    Parameters
+    ----------
+    corpus_indices : [list]
+        the dataset that every characters has changed to index
+    batch_size : [int]
+        the size of a batch
+    num_steps : [int]
+        the time steps that a batch would contain, which means samples length
+    device : [device], optional
+        the device we want this function to run on, by default None
+
+    Yields
+    -------
+    X : [tensor]
+        the first batch of this time
+    Y : [tensor]
+        the next batch of this time, X and Y are couple
+    """
+    # split 'real' batches, imply that there are num_examples Xs or Ys
+    num_examples = (len(corpus_indices)-1)//num_steps
+    # know this time how many small batch are we want to get
+    epoch_size = num_examples//batch_size
+    # list every 'real' batches
+    example_indices = list(range(num_examples))
+    # shuffle these 'real' batches
+    random.shuffle(example_indices)
+
+    # return a real character data of a sample of a batch
+    def _data(pos):
+        return corpus_indices[pos:pos+num_steps]
+
+    # choose device
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    for i in range(epoch_size):
+        # compute the start of a batch
+        i = i*batch_size
+        batch_indices = example_indices[i:i+batch_size]
+        # the first sample of this time
+        X = [_data(j*num_steps) for j in batch_indices]
+        # the next sample of this time
+        Y = [_data(j*num_steps+1) for j in batch_indices]
+        # return X and Y
+        yield torch.tensor(X, dtype=torch.float32, device=device), torch.tensor(
+            Y, dtype=torch.float32, device=device)
+
+
+def data_iter_consecutive(corpus_indices, batch_size, num_steps, device=None):
+    """
+    Get consecutive sample batches of data from corpus_indices with batch_size
+    Dataset is splited to many batches, batches is splited to times and every
+    time has two samples
+
+    Parameters
+    ----------
+    corpus_indices : [list]
+        the dataset that every characters has changed to index
+    batch_size : [int]
+        the size of a batch
+    num_steps : [int]
+        the time steps that a batch would contain, which means samples length
+    device : [device], optional
+        the device we want this function to run on, by default None
+
+    Yields
+    -------
+    X : [tensor]
+        the first batch of this time
+    Y : [tensor]
+        the next batch of this time, X and Y are couple
+    """
+    # choose device
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # change device
+    corpus_indices = torch.tensor(
+        corpus_indices, dtype=torch.float32, device=device)
+    # calculate the number of batches
+    data_len = len(corpus_indices)
+    batch_len = data_len//batch_size
+    # split dataset to batches, from zero to all
+    indices = corpus_indices[0:batch_size *
+                             batch_len].view(batch_size, batch_len)
+    # get how many times in a batch would be
+    epoch_size = (batch_len-1)//num_steps
+    for i in range(epoch_size):
+        # compute the start of this time
+        i = i*num_steps
+        # the first sample of this time
+        X = indices[:, i:i+num_steps]
+        # the next sample of this time
+        Y = indices[:, i+1:i+num_steps+1]
+        # return X and Y
+        yield X, Y
