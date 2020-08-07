@@ -2,6 +2,7 @@ import random
 import torch
 import sys
 import torchvision
+import zipfile
 
 
 def data_iter(batch_size, features, labels):
@@ -164,7 +165,7 @@ def load_data_jay_lyrics(root=r"./Datasets"):
         the amount of non-repeating characters
     """
     # get the zip first
-    with zipfile.ZipFile([root, "/JaychouLyrics/jaychou_lyrics.txt.zip"]) as zin:
+    with zipfile.ZipFile(root+"/JaychouLyrics/jaychou_lyrics.txt.zip") as zin:
         # unpack and load the file inside
         with zin.open('jaychou_lyrics.txt') as f:
             # load the corpus file as array
@@ -232,6 +233,7 @@ def data_iter_random(corpus_indices, batch_size, num_steps, device=None):
         # the next sample of this time
         Y = [_data(j*num_steps+1) for j in batch_indices]
         # return X and Y
+        # Y is one time step faster than X, to be used as the answer
         yield torch.tensor(X, dtype=torch.float32, device=device), torch.tensor(
             Y, dtype=torch.float32, device=device)
 
@@ -283,3 +285,4 @@ def data_iter_consecutive(corpus_indices, batch_size, num_steps, device=None):
         Y = indices[:, i+1:i+num_steps+1]
         # return X and Y
         yield X, Y
+
