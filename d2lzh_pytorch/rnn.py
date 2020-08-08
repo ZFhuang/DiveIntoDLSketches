@@ -1,6 +1,6 @@
 import random
 import torch
-
+import torch.nn as nn
 
 def to_onehot(X, n_class):
     """
@@ -111,3 +111,81 @@ def grad_clipping(params, theta, device):
         # if less than one, just divide them
         for p in params:
             p.grad.data *= (theta/norm)
+
+
+class RNNModel(nn.Module):
+    """
+    RNN model, return (num_steps * batch_size, vocab_size)
+
+    Parameters
+    ----------
+    nn : [torch.nn]
+        the network module
+    """
+    def __init__(self, rnn_layer, vocab_size):
+        super(RNNModel, self).__init__()
+        self.rnn = rnn_layer
+        self.hidden_size = rnn_layer.hidden_size * \
+            (2 if rnn_layer.bidirectional else 1)
+        self.vocab_size = vocab_size
+        self.dense = nn.Linear(self.hidden_size, vocab_size)
+        self.state = None
+
+    def forward(self, inputs, state):
+        # pretreat inputs
+        X = to_onehot(inputs, self.vocab_size)
+        # input X to rnnlayer to get mid-result, rnn here is the core
+        Y, self.state = self.rnn(torch.stack(X), state)
+        # using view and fc to make Y be (num_steps * batch_size, vocab_size)
+        output = self.dense(Y.view(-1, Y.shape[-1]))
+        return output, self.state
+
+
+def predict_rnn_pytorch(prefix, num_chars, model, vocab_size, device,
+                        idx_to_char, char_to_idx):
+    """
+    Predic characters using rnn module
+
+    Parameters
+    ----------
+    prefixes : [string]
+        the start characters of these character sequences
+    num_chars : [int]
+        the number of characters you want to predict
+    model : [type]
+        [description]
+    vocab_size : [int]
+        the number of non-repeating character in this vocab
+    device : [device]
+        device you want to run on
+    idx_to_char : [tensor]
+        index to character map
+    char_to_idx : [tensor]
+        character to index map
+
+    Returns
+    -------
+    [string]
+        the predicted character array
+    """
+    state = None
+    # first output is the prefix
+    output = [char_to_idx[prefix[0]]]
+    for t in range(num_chars+len(prefix)-1):
+        # the last output character will be new input
+        X = torch.tensor([output[-1]], device=device).view(1, 1)
+        if state is not None:
+            if isinstance(state, tuple):
+                state = (state[0].to(device), state[1].to(device))
+            else:
+                state = state.to(device)
+
+        # predict
+        (Y, state) = model(X, state)
+        if t < len(prefix)-1:
+            # prefix is not end yet
+            output.append(char_to_idx[prefix[t+1]])
+        else:
+            # new character mode
+            output.append(int(Y.argmax(dim=1).item()))
+    return ''.join([idx_to_char[i] for i in output])

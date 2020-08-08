@@ -102,7 +102,7 @@ if __name__ == "__main__":
             # 这两行在实现上面的带有隐藏状态的预测计算公式
             # 矩阵相乘可以用来批量batch地完成参数计算的过程
             # tanh是形状类似sigmoid的函数，但是这个函数0的时候结果是0，基于原点对称
-            # 显然新数据和旧数据的权重是不相同的
+            # 由于接近五五开，旧数据的权重会渐渐稳定而新数据产生最大的影响
             H = torch.tanh(torch.matmul(X, W_xh)+torch.matmul(H, W_hh)+b_h)
             Y = torch.matmul(H, W_hq)+b_q
             # 将结果不断叠加到输出向量中

@@ -1,6 +1,4 @@
-from d2lzh_pytorch import linear_reg
-from d2lzh_pytorch import data_process
-from d2lzh_pytorch import rnn
+from d2lzh_pytorch import linear_reg, data_process, rnn
 import time
 import torch
 import torch.nn as nn
@@ -124,7 +122,7 @@ def train_and_predict_rnn(RNN, get_params, init_rnn_state, num_hiddens,
                           lr, clipping_theta, batch_size, pred_period,
                           pred_len, prefixes):
     """
-    Train and predict a sequence with RNN
+    Train and predict a sequence with a function building step by step called RNN
 
     Parameters
     ----------
@@ -144,7 +142,12 @@ def train_and_predict_rnn(RNN, get_params, init_rnn_state, num_hiddens,
         the index formation of input data
     idx_to_char : [tensor]
         index to character map
-    char_to_idx : [tensor]
+    char_to_idx : [tet]
+        how many epoch would print a prediction
+    pred_len : [int]
+        the number of characters you want to predict
+    prefixes : [string]
+        the start characters of these character sequencesnsor]
         character to index map
     is_random_iter : [bool]
         choose the iter's type
@@ -162,7 +165,7 @@ def train_and_predict_rnn(RNN, get_params, init_rnn_state, num_hiddens,
         how many epoch would print a prediction
     pred_len : [int]
         the number of characters you want to predict
-    prefixes : [char]
+    prefixes : [string]
         the start characters of these character sequences
     """
     # choose which function to load data  
@@ -195,10 +198,11 @@ def train_and_predict_rnn(RNN, get_params, init_rnn_state, num_hiddens,
                 for s in state:
                     s.detach_()
 
-            # pretreat our datas, get (X_num,vocab_size)
+            # pretreat our datas, get (batch_size ,vocab_size)
             inputs = rnn.to_onehot(X, vocab_size)
             # put it into RNN and get its output and new state
             # outputs will has num_steps (batch_size, vocal_size) matrixes
+            # here you can see that inputs is totally new, state may be old
             outputs, state = RNN(inputs, state, params)
             # cat outputs to be (num_steps*batch_size, vocal_size)
             outputs = torch.cat(outputs, dim=0)
@@ -223,10 +227,115 @@ def train_and_predict_rnn(RNN, get_params, init_rnn_state, num_hiddens,
 
         # print some result
         if (e+1) % pred_period == 0:
+            # use exp to cal perplexity here
             print('epoch %d, perplexity %f, time %.2f sec' %
                   (e + 1, math.exp(l_sum / n), time.time() - start))
             # print some prediction here
             for prefix in prefixes:
                 print(' -', rnn.predict_rnn(prefix, pred_len, RNN, params,
-                                        init_rnn_state, num_hiddens, vocab_size,
-                                        device, idx_to_char, char_to_idx))
+                                            init_rnn_state, num_hiddens,
+                                            vocab_size, device, idx_to_char, 
+                                            char_to_idx))
+
+
+def train_and_predict_rnn_pytorch(model, num_hiddens, vocab_size, device, 
+                                  corpus_indices, idx_to_char, char_to_idx,
+                                  num_epochs, num_steps, lr, clipping_theta,
+                                  batch_size, pred_period, pred_len, prefixes):
+    """
+    Train the net which is constructed by pytorch module and predict strings
+
+    Parameters
+    ----------
+    model : [function]
+        the recycle neural network
+    num_hiddens : [function]
+        the recycle neural network
+    vocab_size : [int]
+        the number of non-repeating character in this vocab
+    device : [device]
+        device you want to run on
+    corpus_indices : [tensor]
+        the index formation of input data
+    idx_to_char : [tensor]
+        index to character map
+    char_to_idx : [tet]
+        how many epoch would print a prediction
+    num_epochs : [int]
+        number of epochs
+    num_steps : [int]
+        number of time steps
+    lr : [float]
+        learning rate
+    clipping_theta : [float]
+        use to be a threshold of gradients division
+    batch_size : [int]
+        how many times a batch would contain
+    pred_period : [int]
+        how many epoch would print a prediction
+    pred_len : [int]
+        the number of characters you want to predict
+    prefixes : [string]
+        the start characters of these character sequences
+    """
+    # init
+    loss = nn.CrossEntropyLoss()
+    optimizer=torch.optim.Adam(model.parameters(),lr=lr)
+    model.to(device)
+    state=None
+
+    # repeat epoch times, to ensure a better result
+    for e in range(num_epochs):
+        l_sum, n, start = 0.0, 0, time.time()
+        # here only use the consecutive version
+        data_iter = data_process.data_iter_consecutive(
+            corpus_indices, batch_size, num_steps, device)
+
+        # load a batch of pair of data at a time from data_iter
+        # this loop will loading data by time-step, one loop one step
+        # X is now's data and Y is its answer
+        for X, Y in data_iter:
+            if state is not None:
+                if isinstance(state, tuple):
+                    # for LSTM
+                    state = (state[0].detach(), state[1].detach())
+                else:
+                    # detach state from graph to prevent the highly cost
+                    state = state.detach()
+
+            # predict and get outputs
+            # outputs will has num_steps (batch_size, vocal_size) matrixes
+            # here you can see that inputs is totally new, state may be old
+            outputs, state = model(X, state)
+            # make y be (batch*num_steps), y is the ground truth
+            y = torch.transpose(Y, 0, 1).contiguous().view(-1)
+            # compute the loss
+            l = loss(outputs, y.long())
+
+            # set gradient to be zero
+            optimizer.zero_grad()
+            # then backpropagate the gradient
+            l.backward()
+            # clip gradient
+            rnn.grad_clipping(model.parameters(), clipping_theta, device)
+            # decent it
+            optimizer.step()
+            # cal the whole loss
+            l_sum += l.item()*y.shape[0]
+            n += y.shape[0]
+
+        # use exp to cal perplexity
+        try:
+            perplexity=math.exp(l_sum/n)
+        except OverflowError:
+            perplexity=float('inf')
+
+        # print some result
+        if (e+1) % pred_period == 0:
+            print('epoch %d, perplexity %f, time %.2f sec' %
+                  (e + 1, perplexity, time.time() - start))
+            # print some prediction here
+            for prefix in prefixes:
+                print(' -', rnn.predict_rnn_pytorch(prefix, pred_len, model,
+                                                    vocab_size, device,
+                                                    idx_to_char, char_to_idx))
