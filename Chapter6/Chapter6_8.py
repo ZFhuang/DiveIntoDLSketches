@@ -110,3 +110,4 @@ if __name__ == "__main__":
                                         num_epochs, num_steps, lr,
                                         clipping_theta, batch_size, pred_period,
                                         pred_len, prefixes)
+    print('————————————————————————————')
