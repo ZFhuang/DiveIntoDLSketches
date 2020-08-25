@@ -1,5 +1,6 @@
 from IPython import display
 from matplotlib import pyplot as plt
+import numpy as np
 
 
 def use_svg_display():
@@ -106,4 +107,27 @@ def semilogy(x_vals, y_vals, x_label, y_label, x2_vals=None, y2_vals=None,
         plt.semilogy(x2_vals, y2_vals, linestyle=':')
         # legend means icons
         plt.legend(legend)
+    plt.show()
+
+
+def show_trace_2d(f, results):
+    """
+    plot the trace of 2d function's figure and results
+
+    Parameters
+    ----------
+    f : [function]
+        using to plot the figure of funtion
+    results : [tensor]
+        positions of input points
+    """
+    plt.close()
+    # draw input points
+    plt.plot(*zip(*results), '-o', color='#ff7f0e')
+    # get the field of figure
+    x1, x2 = np.meshgrid(np.arange(-5.5, 1.0, 0.1), np.arange(-3.0, 1.0, 0.1))
+    # draw the contour of function using x1,x2 as step
+    plt.contour(x1, x2, f(x1, x2), colors='#1f77b4')
+    plt.xlabel('x1')
+    plt.ylabel('x2')
     plt.show()

@@ -339,3 +339,29 @@ def train_and_predict_rnn_pytorch(model, num_hiddens, vocab_size, device,
                 print(' -', rnn.predict_rnn_pytorch(prefix, pred_len, model,
                                                     vocab_size, device,
                                                     idx_to_char, char_to_idx))
+
+
+def train_2d(trainer):
+    """
+    Train gradient function pretreat from target function and return the decent 
+    trace.
+
+    Parameters
+    ----------
+    trainer : [function]
+        the gradient function, input x1, x2 and s1, s2, return function value
+
+    Returns
+    -------
+    [tensor]
+        the trace of target function's decention's inputs
+    """
+    # s1, s2 here are states
+    x1, x2, s1, s2 = -5, -2, 0, 0
+    results = [(x1, x2)]
+    for i in range(20):
+        # get new value
+        x1, x2, s1, s2 = trainer(x1, x2, s1, s2)
+        results.append((x1, x2))
+    print('epoch %d, x1 %f, x2 %f' % (i + 1, x1, x2))
+    return results
