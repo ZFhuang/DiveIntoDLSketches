@@ -1,7 +1,8 @@
-from d2lzh_pytorch import linear_reg, data_process, rnn
+from d2lzh_pytorch import linear_reg, data_process, rnn,plot
 import time
 import torch
 import torch.nn as nn
+import numpy as np
 import math
 
 
@@ -365,3 +366,127 @@ def train_2d(trainer):
         results.append((x1, x2))
     print('epoch %d, x1 %f, x2 %f' % (i + 1, x1, x2))
     return results
+
+
+def train_ch7(optimizer_fn, states, hyperparams, features, labels,
+              batch_size=10, num_epochs=2):
+    """
+    The training function of chapter7, it is a more useful function.
+    In Chapter7, it is used with some different optimizer functions.
+
+    Parameters
+    ----------
+    optimizer_fn : [function]
+        the optimizer function that wants to use
+    states : [int]
+        states delivered to optimizer
+    hyperparams : [pair]
+        hyperparams delivered to optimizer
+    features : [tensor]
+        batch of features
+    labels : [tensor]
+        batch of labels
+    batch_size : [int], optional
+        size of a batch, by default 10
+    num_epochs : [int], optional
+        summary of number of epochs, by default 2
+    """
+    # using linear regression and squared loss for training
+    net, loss = linear_reg.linreg, linear_reg.squared_loss
+    # init params
+    w = torch.nn.Parameter(torch.tensor(np.random.normal(0, 0.01, size=(
+        features.shape[1], 1)), dtype=torch.float32), requires_grad=True)
+    b = torch.nn.Parameter(torch.zeros(
+        1, dtype=torch.float32), requires_grad=True)
+
+    # get loss
+    def eval_loss():
+        return loss(net(features, w, b), labels).mean().item()
+
+    # prepare data and strutures
+    ls = [eval_loss()]
+    data_iter = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(features, labels), batch_size, shuffle=True)
+
+    # for each epochs
+    for _ in range(num_epochs):
+        start = time.time()
+        for batch_i, (X, y) in enumerate(data_iter):
+            # using avg loss
+            l = loss(net(X, w, b), y).mean()
+            # clean gradients
+            if w.grad is not None:
+                w.grad.data.zero_()
+                b.grad.data.zero_()
+            l.backward()
+            optimizer_fn([w, b], states, hyperparams)
+            # save current loss
+            if (batch_i+1)*batch_size % 100 == 0:
+                ls.append(eval_loss())
+
+    # output results
+    print('loss: %f, %f sec per epoch' % (ls[-1], time.time() - start))
+    plot.set_figsize()
+    plot.plt.plot(np.linspace(0, num_epochs, len(ls)), ls)
+    plot.plt.xlabel('epoch')
+    plot.plt.ylabel('loss')
+    plot.plt.show()
+
+
+def train_pytorch_ch7(optimizer_fn, optimizer_hyperparams, features, labels,
+                      batch_size=10, num_epochs=2):
+    """
+    The training function of chapter7, but this is the pytorch library version
+
+    Parameters
+    ----------
+    optimizer_fn : [function]
+        the optimizer function that wants to use
+    optimizer_hyperparams : [pair]
+        hyperparams delivered to optimizer
+    features : [tensor]
+        batch of features
+    labels : [tensor]
+        batch of labels
+    batch_size : [int], optional
+        size of a batch, by default 10
+    num_epochs : [int], optional
+        summary of number of epochs, by default 2
+    """
+    # init the net, using one linear layer to simulate the linear regression
+    net = nn.Sequential(
+        nn.Linear(features.shape[-1], 1)
+    )
+    loss = nn.MSELoss()
+    optimizer = optimizer_fn(net.parameters(), **optimizer_hyperparams)
+
+    # get loss
+    def eval_loss():
+        return loss(net(features).view(-1), labels).item()/2
+
+    # prepare data and strutures
+    ls = [eval_loss()]
+    data_iter = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(features, labels), batch_size, shuffle=True)
+
+    # for each epochs
+    for _ in range(num_epochs):
+        start = time.time()
+        # for each batches
+        for batch_i, (X, y) in enumerate(data_iter):
+            # divided by 2 is used to make sure the loss is equal to train_ch7's
+            l = loss(net(X).view(-1), y)/2
+            optimizer.zero_grad()
+            l.backward()
+            optimizer.step()
+            # save current loss
+            if(batch_i + 1) * batch_size % 100 == 0:
+                ls.append(eval_loss())
+
+    # output results
+    print('loss: %f, %f sec per epoch' % (ls[-1], time.time() - start))
+    plot.set_figsize()
+    plot.plt.plot(np.linspace(0, num_epochs, len(ls)), ls)
+    plot.plt.xlabel('epoch')
+    plot.plt.ylabel('loss')
+    plot.plt.show()

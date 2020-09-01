@@ -3,6 +3,7 @@ import torch
 import sys
 import torchvision
 import zipfile
+import numpy as np
 
 
 def data_iter(batch_size, features, labels):
@@ -65,7 +66,7 @@ def load_data_fashion_mnist(batch_size, resize=None, root=r"./Datasets"):
     resize : [int]
         the resize value want to apply on fashion_mnist's dataset
     root : [string]
-        the root path of the dataset
+        the root path of the dataset, by default r"./Datasets"
 
     Returns
     -------
@@ -286,3 +287,26 @@ def data_iter_consecutive(corpus_indices, batch_size, num_steps, device=None):
         # return X and Y
         yield X, Y
 
+
+def get_data_ch7(root=r"./Datasets"):
+    """
+    Load data from NASA's dataset, named airfoil_self_noise.dat
+
+    Parameters
+    ----------
+    root : [string], optional
+        the root path of the dataset, by default r"./Datasets"
+
+    Returns
+    -------
+    [tensor, tensor]
+        the first five features and one label of 1500 samples
+    """
+    # load data
+    data = np.genfromtxt(root+'/AirfoilSelfNoise/airfoil_self_noise.dat',
+                         delimiter='\t')
+    # normalize the data
+    data = (data - data.mean(axis=0)) / data.std(axis=0)
+    # return the first five features and one label of 1500 samples
+    return torch.tensor(data[:1500, :-1], dtype=torch.float32), \
+        torch.tensor(data[:1500, -1], dtype=torch.float32)
