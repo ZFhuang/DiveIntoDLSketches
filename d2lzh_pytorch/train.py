@@ -490,3 +490,22 @@ def train_pytorch_ch7(optimizer_fn, optimizer_hyperparams, features, labels,
     plot.plt.xlabel('epoch')
     plot.plt.ylabel('loss')
     plot.plt.show()
+
+
+class Benchmark():
+    """
+    Time marking class. Using 'with' to create this class and automatically 
+    destory it.
+    """
+    def __init__(self, prefix=None):
+        # in initiation this class will construct a string telling the name of 
+        # this task
+        self.prefix = prefix + ' ' if prefix else ''
+
+    def __enter__(self):
+        # then this class will start the time marker
+        self.start = time.time()
+
+    def __exit__(self, *args):
+        # once current task completed, this class will exit and print the result
+        print('%stime: %.4f sec' % (self.prefix, time.time() - self.start))
