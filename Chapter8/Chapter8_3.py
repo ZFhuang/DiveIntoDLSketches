@@ -25,6 +25,7 @@ x_gpu1 = torch.rand(size=(100, 100), device='cuda:0')
 x_gpu2 = torch.rand(size=(100, 100), device='cuda:1')
 
 # 单独让两个GPU分别运行，测试时间
+# torch.cuda.synchronize()的作用是等待GPU上的所有任务完成
 with train.Benchmark('Run on GPU1.'):
     run(x_gpu1)
     torch.cuda.synchronize()
