@@ -497,8 +497,9 @@ class Benchmark():
     Time marking class. Using 'with' to create this class and automatically 
     destory it.
     """
+
     def __init__(self, prefix=None):
-        # in initiation this class will construct a string telling the name of 
+        # in initiation this class will construct a string telling the name of
         # this task
         self.prefix = prefix + ' ' if prefix else ''
 
@@ -509,3 +510,55 @@ class Benchmark():
     def __exit__(self, *args):
         # once current task completed, this class will exit and print the result
         print('%stime: %.4f sec' % (self.prefix, time.time() - self.start))
+
+
+def train(train_iter, test_iter, net, loss, optimizer, device, num_epochs):
+    """
+    Standard training function.
+
+    Parameters
+    ----------
+    train_iter : [producer]
+        the train dataset
+    test_iter : [producer]
+        the test dataset
+    net : [function]
+        the chossing neural network function
+    loss : [function]
+        input y and y_hat, get loss value
+    optimizer : [function]
+        the function to decrease the gradient
+    device : [device]
+        the device you want to run on
+    num_epochs : [int]
+        how many times do you want to learn through the whole training dataset?
+    """
+    # move the net to target device
+    net = net.to(device)
+    print("training on ", device)
+    batch_count = 0
+    # for each epoch
+    for epoch in range(num_epochs):
+        train_l_sum, train_acc_sum, n, start = 0.0, 0.0, 0, time.time()
+        # for each data pair in one epoch
+        for X, y in train_iter:
+            # remember to move the data to target device too
+            X = X.to(device)
+            y = y.to(device)
+            # get the output from net
+            y_hat = net(X)
+            # cal loss
+            l = loss(y_hat, y)
+            optimizer.zero_grad()
+            l.backward()
+            # optimizer take next step
+            optimizer.step()
+            train_l_sum += l.cpu().item()
+            train_acc_sum += (y_hat.argmax(dim=1) == y).sum().cpu().item()
+            n += y.shape[0]
+            batch_count += 1
+        # caculate test accuracy after training is over and output results
+        test_acc = data_process.evaluate_accuracy(test_iter, net)
+        print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f,time %.1f sec' % (
+            epoch + 1, train_l_sum / batch_count, train_acc_sum / n, test_acc,
+            time.time() - start))

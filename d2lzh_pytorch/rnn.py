@@ -1,6 +1,7 @@
 import random
 import torch
 import torch.nn as nn
+from d2lzh_pytorch import layers
 
 def to_onehot(X, n_class):
     """
@@ -189,3 +190,63 @@ def predict_rnn_pytorch(prefix, num_chars, model, vocab_size, device,
             # new character mode
             output.append(int(Y.argmax(dim=1).item()))
     return ''.join([idx_to_char[i] for i in output])
+
+
+def resnet18(num_classes):
+    """
+    ResNet-18 class. Just input the number of classes want to predict then will
+    gain the network want to produce.
+
+    Parameters
+    ----------
+    num_classes : [int]
+        the amount of classes want to predict
+
+    Returns
+    -------
+    [function]
+        the customize network
+    """
+    net = nn.Sequential(
+        # small convolution layer to extract features
+        nn.Conv2d(3, 64, kernel_size=3, stride=1),
+        # normalize
+        nn.BatchNorm2d(64),
+        # activation layer
+        nn.ReLU()
+    )
+
+    # make a residual block factory here
+    def resnet_block(in_channels, out_channels, num_residuals, first_block=False):
+        # first residual block's input channel should have the same size as the 
+        # output channel
+        if first_block:
+            assert in_channels == out_channels
+        blk = []
+        # using this loop to determine the amount of residual blocks
+        for i in range(num_residuals):
+            # for different amount of residual blocks should use different 
+            # preventive strategies
+            if i == 0 and not first_block:
+                blk.append(layers.Residual(in_channels, out_channels,
+                                           use_1x1_conv=True, stride=2))
+            else:
+                blk.append(layers.Residual(out_channels, out_channels))
+        # return a sequential block contain a list of residual blocks
+        return nn.Sequential(*blk)
+
+    # use these residual blocks to constract the target network
+    net.add_module("resnet_block1", resnet_block(64, 64, 2, first_block=True))
+    net.add_module("resnet_block2", resnet_block(64, 128, 2))
+    net.add_module("resnet_block3", resnet_block(128, 256, 2))
+    net.add_module("resnet_block4", resnet_block(256, 512, 2))
+    # global average pool layer will make multidimension to be two dimension
+    net.add_module("global_avg_pool", layers.GlobalAvgPool2d())
+    # this part often be called 'dense layer'
+    net.add_module("fc", nn.Sequential(
+        # flatten layer map 2d to 1d
+        layers.FlattenLayer(),
+        # linear layer map the long arguments list to result list
+        nn.Linear(512, num_classes)
+    ))
+    return net

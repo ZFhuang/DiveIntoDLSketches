@@ -19,46 +19,18 @@ if __name__ == "__main__":
     # 设置计算设备，让计算在GPU上进行
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # 定义一下残差块，重点是在前向传播函数中提供了绕路的选项
-    class Residual(nn.Module):
-        def __init__(self, in_channels, out_channels, use_1x1_conv=False, stride=1):
-            super(Residual, self).__init__()
-            # 两层卷积，为了后面能进行相加计算，输出通道应该是一样的
-            self.conv1 = nn.Conv2d(
-                in_channels, out_channels, kernel_size=3, padding=1, stride=stride)
-            self.conv2 = nn.Conv2d(
-                out_channels, out_channels, kernel_size=3, padding=1)
-            # 对于希望有旁路的情况，需要用1*1卷积来完成通道对准的处理
-            if use_1x1_conv:
-                self.conv3 = nn.Conv2d(
-                    in_channels, out_channels, kernel_size=1, stride=stride)
-            else:
-                self.conv3 = None
-            # 两个批量归一化层用来加速训练稳定效果
-            self.bn1 = nn.BatchNorm2d(out_channels)
-            self.bn2 = nn.BatchNorm2d(out_channels)
-
-        def forward(self, X):
-            # 两层卷积
-            Y = F.relu(self.bn1(self.conv1(X)))
-            Y = self.bn2(self.conv2(Y))
-            # 如果conv3存在，意味着开启了旁路，需要额外进行计算
-            # 旁路也起到尺寸配准的效果
-            if self.conv3:
-                X = self.conv3(X)
-            return F.relu(Y+X)
-
+    # 保存一下残差块layers.Residual，重点是在前向传播函数中提供了绕路的选项
+    
     # 下面测试一下残差块的运行，没有旁路的话残差块的输入和输出通道必须相等
-    blk = Residual(3, 3)
+    blk = layers.Residual(3, 3)
     X = torch.rand((4, 3, 6, 6))
     print(blk(X).shape)
     # 有旁路卷积的话就可以调整输入输出的尺寸，因为旁路有对准输入输出的效果
     # 旁路卷积也可以不开启，那样的话残差块的输入输出必须相等
-    blk = Residual(3, 6, use_1x1_conv=True, stride=2)
+    blk = layers.Residual(3, 6, use_1x1_conv=True, stride=2)
     print(blk(X).shape)
     print('————————————————————————————')
 
-    
     # 首先和前面类似，定义一个动态返回残差块层的生成函数
     def resnet_block(in_channels, out_channels, num_residuals, first_block=False):
         # 对于第一个残差块要定论输入通道和输出通道相同
@@ -69,10 +41,10 @@ if __name__ == "__main__":
         for i in range(num_residuals):
             # 这里要根据当前是第几个残差块来决定通道大小的问题
             if i == 0 and not first_block:
-                blk.append(Residual(in_channels, out_channels,
+                blk.append(layers.Residual(in_channels, out_channels,
                                     use_1x1_conv=True, stride=2))
             else:
-                blk.append(Residual(out_channels, out_channels))
+                blk.append(layers.Residual(out_channels, out_channels))
         # 和VGG的时候类似，返回序列化后的残差块链
         return nn.Sequential(*blk)
 

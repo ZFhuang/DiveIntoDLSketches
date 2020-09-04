@@ -131,3 +131,37 @@ def show_trace_2d(f, results):
     plt.xlabel('x1')
     plt.ylabel('x2')
     plt.show()
+
+
+def show_images(imgs, num_rows, num_cols, scale=2):
+    """
+    Show images in one figure
+
+    Parameters
+    ----------
+    imgs : [Image]
+        the images tensor wants to display
+    num_rows : [int]
+        the row number of figure
+    num_cols : [int]
+        the colunm number of figure
+    scale : [int], optional
+        control the size of figure, by default 2
+
+    Returns
+    -------
+    [array]
+        the images in figure
+    """
+    figsize = (num_cols*scale, num_rows*scale)
+    _, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
+    for i in range(num_rows):
+        for j in range(num_cols):
+            # show the target image
+            axes[i][j].imshow(imgs[i*num_cols+j])
+            # set the sub-axis to be invisible
+            axes[i][j].axes.get_xaxis().set_visible(False)
+            axes[i][j].axes.get_yaxis().set_visible(False)
+    # remember to show figure at last
+    plt.show()
+    return axes
