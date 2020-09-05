@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     # 先尝试显示一下猫图
     plot.set_figsize()
-    img = Image.open(r"./Datasets"+'/Cat/cat1.jpg')
+    img = Image.open(r"./Datasets"+'/Img/cat1.jpg')
     # plot.plt.imshow(img)
     # # 记得要显示时需要show一下
     # plot.plt.show()

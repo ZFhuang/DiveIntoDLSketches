@@ -165,3 +165,24 @@ def show_images(imgs, num_rows, num_cols, scale=2):
     # remember to show figure at last
     plt.show()
     return axes
+
+
+def bbox_to_rect(bbox, color):
+    """[summary]
+
+    Parameters
+    ----------
+    bbox : [array]
+        [description]
+    color : [string]
+        [description]
+
+    Returns
+    -------
+    [plt.Rectangle]
+        [description]
+    """
+    return plt.Rectangle(
+        xy=(bbox[0], bbox[1]), width=bbox[2]-bbox[0], height=bbox[3]-bbox[1],
+        fill=False, edgecolor=color, linewidth=2
+    )
