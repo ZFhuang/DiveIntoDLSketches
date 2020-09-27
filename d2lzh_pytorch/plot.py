@@ -168,21 +168,60 @@ def show_images(imgs, num_rows, num_cols, scale=2):
 
 
 def bbox_to_rect(bbox, color):
-    """[summary]
+    """
+    Transform bbox to rectangle which can be plot in a figure.
 
     Parameters
     ----------
     bbox : [array]
-        [description]
+        the top-left ratio position and bottom-right ratio position of this bbox
     color : [string]
-        [description]
+        name of color you want to draw a bbox
 
     Returns
     -------
     [plt.Rectangle]
-        [description]
+        the rectagle that can be draw in a plt-figure
     """
     return plt.Rectangle(
         xy=(bbox[0], bbox[1]), width=bbox[2]-bbox[0], height=bbox[3]-bbox[1],
         fill=False, edgecolor=color, linewidth=2
     )
+
+
+def show_bboxes(axes, bboxes, labels=None, colors=None):
+    """
+    Draw some bboxes into plt figure.
+
+    Parameters
+    ----------
+    axes : [imshow.axes]
+        the axes of figure
+    bboxes : [array]
+        the top-left ratio position and bottom-right ratio position of these bboxes
+    labels : [string], optional
+        names of these bboxes, by default None
+    colors : [string], optional
+        names of color you want to draw for these bboxes, by default None
+    """
+    def _make_list(obj, default_values=None):
+        # init obj to a list or nothing
+        if obj is None:
+            obj = default_values
+        elif not isinstance(obj, (list, tuple)):
+            obj = [obj]
+        return obj
+
+    # init labels and color
+    labels = _make_list(labels)
+    colors = _make_list(colors, ['b', 'g', 'r', 'm', 'c'])
+    # for each bbox
+    for i, bbox in enumerate(bboxes):
+        color = colors[i % len(colors)]
+        rect = bbox_to_rect(bbox.asnumpy(), color)
+        axes.add_patch(rect)
+        # set labels
+        if labels and len(labels) > i:
+            text_color = 'k' if color == 'w' else 'w'
+            axes.text(rect.xy[0], rect.xy[1], labels[i], va='center', ha='center',
+                      fontsize=9, color=text_color, bbox=dict(facecolor=color, lw=0))
