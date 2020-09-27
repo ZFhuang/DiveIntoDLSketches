@@ -218,7 +218,7 @@ def show_bboxes(axes, bboxes, labels=None, colors=None):
     # for each bbox
     for i, bbox in enumerate(bboxes):
         color = colors[i % len(colors)]
-        rect = bbox_to_rect(bbox.asnumpy(), color)
+        rect = bbox_to_rect(bbox.detach().cpu().numpy(), color)
         axes.add_patch(rect)
         # set labels
         if labels and len(labels) > i:
