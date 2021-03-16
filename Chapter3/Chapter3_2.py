@@ -26,7 +26,7 @@ num_examples = 1000
 # 利用numpy生成高斯分布后再转到tensor，参数是均值，方差，维度
 features = torch.from_numpy(np.random.normal(
     0, 1, (num_examples, num_features)))
-# 然后利用特征生成线性标签集,依靠权重real_w和偏置real_b
+# 然后利用特征生成线性标签集,依靠权重real_w和偏置real_b, 也就是在随机的x上绘制线性数据
 real_w = [2, -3.4]
 real_b = 4.2
 labels = real_w[0]*features[:, 0]+real_w[1]*features[:, 1]+real_b
@@ -38,7 +38,7 @@ labels += e
 plot.set_figsize()
 plt.scatter(features[:, 1].numpy(), labels.numpy(), 1)
 # 一定要调用show才会显示
-# plt.show()
+plt.show()
 print('————————————')
 
 # 训练读取数据的时候，通常我们是按照小批量来读取数据的
@@ -52,7 +52,7 @@ for x, y in data_process.data_iter(b_size, features, labels):
 
 # 然后为了创建自己的线性回归模型，首先准备待学习的权重和偏差参数,并启动其梯度追踪
 # 这里的模型将会是y=wx+b，因此特征个w，一个b，都设置为float提高精度
-# 权重初始化为0,0.01的正态随机数
+# 权重初始化为0,0.01的正态随机数, 特征个元素
 w = torch.tensor(np.random.normal(0, 0.01, (num_features, 1)), dtype=float)
 w.requires_grad_(True)
 # 偏差初始化为0，一个元素
@@ -65,7 +65,7 @@ b.requires_grad_(True)
 learning_rate = 0.03
 epochs = 5
 b_size = 10
-# 用函数指针先简化下后面的调用
+# 用函数指针先简化下后面的调用, 使用线性回归模型
 net = linear_reg.linreg
 loss = linear_reg.squared_loss
 # 以周期为单位进行循环
@@ -79,7 +79,6 @@ for ep in range(epochs):
         l.backward()
         # 在sgd中用梯度修改w和b的值
         linear_reg.sgd([w, b], learning_rate, b_size)
-
         # 不要忘了需要进行梯度清零
         w.grad.data.zero_()
         b.grad.data.zero_()

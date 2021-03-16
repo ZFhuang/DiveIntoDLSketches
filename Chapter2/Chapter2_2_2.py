@@ -43,7 +43,7 @@ q = q.clone()
 print(q)
 print('————————————')
 
-# item函数可以讲一个标量tensor转为一个普通数字
+# item函数可以将一个标量tensor转为一个普通数字
 x = torch.rand(1)
 print(x)
 print(x.item())

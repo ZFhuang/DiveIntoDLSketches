@@ -35,8 +35,6 @@ print(features[:2], poly_features[:2], labels[:2])
 num_epochs, loss = 100, torch.nn.MSELoss()
 
 # 写一个训练并进行绘制的函数fit_and_plot
-
-
 def fit_and_plot(train_features, test_features, train_labels, test_labels):
     # 写一个只有线性层的网络，打平连接到一个输出
     # 这个过程自动初始化了参数所以不用额外处理了

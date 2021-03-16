@@ -43,7 +43,7 @@ for i in range(10):
     X.append(mnist_train[i][0])
     y.append(mnist_train[i][1])
 # 将这个得到的特征和标签转换为图片绘制
-# plot.show_fashion_mnist(X, data_process.get_fashion_mnist_labels(y))
+plot.show_fashion_mnist(X, data_process.get_fashion_mnist_labels(y))
 
 # 将读取数据的流程封装到load_data_fashion_mnist中使用
 train_iter, _ = data_process.load_data_fashion_mnist(256)

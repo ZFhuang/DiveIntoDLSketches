@@ -10,6 +10,7 @@ import torch
 # 在移动前需要先判断一下cuda是否可用
 # 通常情况下我们创建的tensor是处于CPU上的
 if torch.cuda.is_available():
+    print('In CUDA!')
     x = torch.ones(5, 3, device="cuda")
     y = x.to(torch.device("cpu"))
 
