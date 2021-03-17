@@ -4,11 +4,12 @@ import torch
 from torch import nn
 
 """
-这一节介绍了构造网络模型的细节
+这一节介绍了构造网络模型的细节, 非常关键的一节
 """
 
 
 # 通过继承nn.Module可以自定义出自己想要的模型，此时生成的网络是固定的
+# 这种写法比较常见
 class MLP(nn.Module):
     # 重载__init__和forward函数可以创建模型参数和定义前向计算
     # __init__声明了带有参数的层和模型的结构
@@ -21,13 +22,13 @@ class MLP(nn.Module):
         self.output = nn.Linear(256, 10)
 
     # 然后重载forward函数来指定如何进行正向的计算，将前面定义好的层连接起来
+    # forward函数会在step的时候被调用, 通过函数的嵌套调用来完成一步的计算
     # 反向传播不需要定义，因为系统会根据自动求梯度自己生成一个
     def forward(self, x):
-        a = self.act(self.hidden(x))
-        return self.output(a)
+        return self.output(self.act(self.hidden(x)))
 
 
-# 然后实例化net来进行计算即可,传入net的参数会到达forward处
+# 然后实例化net来进行计算即可, 传入net的参数会到达forward处
 X = torch.rand(2, 784)
 net = MLP()
 print(net)
@@ -51,6 +52,7 @@ class MySquential(nn.Module):
 
     def forward(self, input):
         # 前向传播时顺序遍历网络中的所有Module并应用到input上直到出结果
+        # 这种写法使得网络只能是序列化的
         for module in self._modules.values():
             input = module(input)
         return input
@@ -122,6 +124,7 @@ class NestMLP(nn.Module):
         self.net = nn.Sequential(nn.Linear(40, 30), nn.ReLU())
 
     def forward(self, x):
+        # 每次调用就会自动序列执行子类的forward
         return self.net(x)
 
 

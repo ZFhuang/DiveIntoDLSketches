@@ -101,6 +101,7 @@ def train(net, trian_features, train_labels, test_features, test_labels,
     for e in range(num_epochs):
         for X, y in train_iter:
             l = loss(net(X.float()), y.float())
+            # 清空梯度
             optim.zero_grad()
             l.backward()
             optim.step()
@@ -116,6 +117,7 @@ K折交叉验证
 
 
 # 写个3.11中介绍过的K折交叉验证函数，它是用来在真正测试前判断模型的泛化能力的
+# 将数据集分为k组, 然后每次取其中一组用于验证, 剩下的用来训练, 这样一共可进行k轮
 def get_k_fold_data(k, i, X, y):
     assert k > 1
     # 双斜杠是下取整的除法
@@ -123,7 +125,7 @@ def get_k_fold_data(k, i, X, y):
     X_train, y_train = None, None
     # 对K折里的每一折
     for j in range(k):
-        # slice的效果是截取下标范围的一段元素，需要配合下面的下标运算符才能截取
+        # slice的效果是截取范围内的一段，配合下面的下标运算符从数据中截取
         idx = slice(j*fold_size, (j+1)*fold_size)
         # 得到截取范围内的子tensor
         X_part, y_part = X[idx, :], y[idx]

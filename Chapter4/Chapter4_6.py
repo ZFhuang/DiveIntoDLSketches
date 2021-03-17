@@ -9,7 +9,7 @@ from torch import nn
 
 # 书中所说的查看GPU信息在Windows环境下一般通过进入到NVIDIA Corporation\NVSMI
 # 目录中然后调用nvidia-smi即可显示
-# 然后再Pytorch中我们通过调用下面的函数来查看当前GPU的信息
+# 然后在Pytorch中我们通过调用下面的函数来查看当前GPU的信息
 
 # cuda是否可用
 print(torch.cuda.is_available())

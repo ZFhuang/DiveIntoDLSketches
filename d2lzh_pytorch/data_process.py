@@ -91,7 +91,7 @@ def load_data_fashion_mnist(batch_size, resize=None, root=r"./Datasets"):
     #     num_worker = 0
     # else:
     #     num_worker = 4
-    num_worker =4
+    num_worker =0
     # load data by DataLoader
     train_iter = torch.utils.data.DataLoader(
         mnist_train, batch_size=batch_size, shuffle=True, num_workers=num_worker)

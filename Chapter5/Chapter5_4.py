@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 """
-这一节介绍了神经网络的池化层，池化本质类似于采样操作
+这一节介绍了神经网络的池化层，池化本质类似于采样操作, 主要是下采样, 目的是感受更大的区域
 """
 
 
@@ -18,8 +18,10 @@ def pool2d(X, pool_size, mode='max'):
     for i in range(Y.shape[0]):
         for j in range(Y.shape[1]):
             # 扫描所有范围内元素，根据池化模式来选择所需的结果存入
+            # 最大池化
             if mode == 'max':
                 Y[i, j] = X[i:i+p_h, j:j+p_w].max()
+            # 平均池化
             elif mode == 'avg':
                 Y[i, j] = X[i:i+p_h, j:j+p_w].mean()
     return Y
@@ -46,7 +48,7 @@ print(pool2d(X))
 print('————————————————————————————')
 
 
-# 在处理多通道数据的时候，池化层不该被输入和输出的通道数，因为它对各个通道池化后不合并
+# 在处理多通道数据的时候，池化层不改变输入和输出的通道数，因为它对各个通道池化后不会合并
 X=torch.cat((X,X+1),dim=1)
 print(X.shape)
 pool2d=nn.MaxPool2d(3,padding=1,stride=2)

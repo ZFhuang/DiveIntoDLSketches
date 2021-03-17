@@ -7,7 +7,6 @@ from torch import nn
 这一节介绍了除了使用现有的层外，如何自定义神经网络的层
 """
 
-
 class CenteredLayer(nn.Module):
     # 首先定义不含模型参数的自定义层,网络层也是继承自Module类的，通过forward函数计算
     def __init__(self, **kwargs):

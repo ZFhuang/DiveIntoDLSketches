@@ -39,7 +39,7 @@ print('————————————————————————�
 class MyModel(nn.Module):
     def __init__(self, **kwargs):
         super(MyModel, self).__init__(**kwargs)
-        # 如果⼀一个Tensor是Parameter,那么它会⾃自动被添加到模型的参数列列表⾥
+        # 如果一个Tensor是Parameter,那么它会自动被添加到模型的参数列表
         self.weight1 = nn.Parameter(torch.rand(20, 20))
         # 因此weight2没有加入参数列表中
         self.weight2 = torch.rand(20, 20)
