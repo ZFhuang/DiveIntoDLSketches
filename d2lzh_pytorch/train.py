@@ -536,10 +536,10 @@ def train(train_iter, test_iter, net, loss, optimizer, device, num_epochs):
     # move the net to target device
     net = net.to(device)
     print("training on ", device)
-    batch_count = 0
     # for each epoch
     for epoch in range(num_epochs):
         train_l_sum, train_acc_sum, n, start = 0.0, 0.0, 0, time.time()
+        batch_count = 0
         # for each data pair in one epoch
         for X, y in train_iter:
             # remember to move the data to target device too

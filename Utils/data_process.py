@@ -2,11 +2,11 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-import torchvision
-import cv2
+from PIL import Image
 import time
 import shutil
 import random
+import cv2
 from torch.utils.data import Dataset
 
 class ImagePairDataset(Dataset):
@@ -36,8 +36,8 @@ class ImagePairDataset(Dataset):
         # 被DataLoader以下标调用
         datafiles = self.files[index]
         # 得到路径并读取图片
-        image = cv2.imread(datafiles["img"])
-        label = cv2.imread(datafiles["label"])
+        image = Image.open(datafiles["img"])
+        label = Image.open(datafiles["label"])
         I = np.asarray(image,np.float32)
         I = I.transpose((2,0,1))
         L = np.asarray(label,np.float32)
@@ -45,6 +45,11 @@ class ImagePairDataset(Dataset):
         # 返回对应的读取信息
         return I.copy(), L.copy()
 
+def reinit_folder(folder):
+    shutil.rmtree(folder)
+    os.makedirs(folder)
+    print("Reinit folder: "+folder)
+    
 def bicubic_images(folder, target_folder,size):
     # 批量双三次图像
     for _,_,files in os.walk(folder):
@@ -76,6 +81,7 @@ def cut_images(folder, size, stride):
             os.remove(os.path.join(folder,file))
 
 def random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Labels_folder_test,ratio):
+    # 随机将一定比例的文件移动到另一文件夹， 且是对应数量的
     for _,_,files in os.walk(Inputs_folder_train):
         file_num=len(files)
         sample_num=int(file_num*ratio)
@@ -84,30 +90,3 @@ def random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Label
             file_name=files[i]
             shutil.move(os.path.join(Inputs_folder_train,file_name), os.path.join(Inputs_folder_test,file_name))
             shutil.move(os.path.join(Labels_folder_train,file_name), os.path.join(Labels_folder_test,file_name))
-
-def train(train_iter, test_iter, net, loss, optimizer, device, num_epochs):
-    net = net.to(device)
-    print("training on ", str(device))
-    for epoch in range(num_epochs):
-        batch_count = 0
-        train_l_sum, n, start = 0.0, 0.0, time.time()
-        for X, y in train_iter:
-            X = X.to(device)
-            y = y.to(device)
-            y_hat = net(X)
-            l = loss(y_hat, y)
-            optimizer.zero_grad()
-            l.backward()
-            optimizer.step()
-            train_l_sum += l.cpu().item()
-            n += y.shape[0]
-            batch_count += 1
-        if epoch%10==0:
-            print('epoch %d, loss %.4f, time %.1f sec' % (
-            epoch + 1, train_l_sum / batch_count, time.time() - start))
-
-def test():
-    pass
-
-def test_with_img():
-    pass
