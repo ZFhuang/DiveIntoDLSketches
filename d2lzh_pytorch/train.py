@@ -94,8 +94,8 @@ def train_ch5(net, train_iter, test_iter, batch_size, optimizer,
     net = net.to(device)
     print('training on:', device)
     loss = torch.nn.CrossEntropyLoss()
-    batch_count = 0
     for e in range(num_epochs):
+        batch_count = 0
         train_l_sum, train_acc_sum, n, start = 0.0, 0.0, 0, time.time()
         for X, y in train_iter:
             # apply datas to target device

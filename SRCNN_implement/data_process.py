@@ -87,10 +87,10 @@ def random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Label
 
 def train(train_iter, test_iter, net, loss, optimizer, device, num_epochs):
     net = net.to(device)
-    print("training on ", device)
-    batch_count = 0
+    print("training on ", str(device))
     for epoch in range(num_epochs):
-        train_l_sum, train_acc_sum, n, start = 0.0, 0.0, 0, time.time()
+        batch_count = 0
+        train_l_sum, n, start = 0.0, 0.0, time.time()
         for X, y in train_iter:
             X = X.to(device)
             y = y.to(device)
@@ -102,24 +102,12 @@ def train(train_iter, test_iter, net, loss, optimizer, device, num_epochs):
             train_l_sum += l.cpu().item()
             n += y.shape[0]
             batch_count += 1
-        # test_acc = evaluate_accuracy(test_iter, net)
-        print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f,time %.1f sec' % (
-            epoch + 1, train_l_sum / batch_count, train_acc_sum / n, 0, time.time() - start))
+        if epoch%10==0:
+            print('epoch %d, loss %.4f, time %.1f sec' % (
+            epoch + 1, train_l_sum / batch_count, time.time() - start))
 
-def evaluate_accuracy(data_iter, net, device=torch.device(
-        'cuda' if torch.cuda.is_available() else 'cpu')):
-    acc_sum, n = 0.0, 0
-    for X, y in data_iter:
-        if isinstance(net, torch.nn.Module):
-            net.eval()
-            acc_sum += (net(X.to(device)).argmax(dim=1) ==
-                        y.to(device)).float().sum().cpu().item()
-            net.train()
-        else:
-            if('is_training' in net.__code__.co_varnames):
-                acc_sum += (net(X, is_training=False).argmax(dim=1)
-                            == y).float().sum().item()
-            else:
-                acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
-        n += y.shape[0]
-    return acc_sum/n
+def test():
+    pass
+
+def test_with_img():
+    pass
