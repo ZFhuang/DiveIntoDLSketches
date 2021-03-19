@@ -4,6 +4,39 @@ from torch import nn
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
+from PIL import Image
+
+# VDSR, 应用了残差网络达成深度学习, 改进的SRCNN, 2016
+# 思路接近VGG11
+class VDSR(nn.Module):
+    def __init__(self):
+        super(VDSR, self).__init__()
+        seq=[]
+        for i in range(2):
+            seq.append(VDSR_Block())
+        self.loop=nn.Sequential(*seq)
+    
+    def forward(self, res):
+        res=self.loop(res)
+        return res
+
+class VDSR_Block(nn.Module):
+    def __init__(self):
+        super(VDSR_Block, self).__init__()
+        self.inp=nn.Conv2d(3,64,3,padding=1)
+        seq=[]
+        for j in range(62):
+            seq.append(nn.Conv2d(64,64,3,padding=1))
+            seq.append(nn.ReLU())
+        self.conv=nn.Sequential(*seq)
+        self.out=nn.Conv2d(64,3,3,padding=1)
+    
+    def forward(self, img):
+        res=img
+        res=self.inp(res)
+        res=torch.sigmoid(self.conv(res))
+        res=self.out(res)
+        return res+img
 
 def train(train_iter, test_iter, net, loss, optimizer, num_epochs,print_epochs_gap=10, device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
     net.train()
@@ -20,7 +53,7 @@ def train(train_iter, test_iter, net, loss, optimizer, num_epochs,print_epochs_g
             # 预测
             y_hat = net(X)
             # 计算损失
-            l = loss(y_hat, y)
+            l = loss(y_hat, y-X)
             # 反向转播
             optimizer.zero_grad()
             l.backward()
@@ -50,7 +83,7 @@ def eval(data_iter, net,loss, eval_num=3,device=torch.device(
         # 预测
         y_hat = net(X)
         # 计算损失
-        l = loss(y_hat, y)
+        l = loss(y_hat, y-X)
         # 记录损失和数量
         l_sum += l.cpu().item()
         batch_count += 1
@@ -71,8 +104,9 @@ def eval_with_img(data_iter, net,loss, eval_num=10,device=torch.device(
         y = y.to(device)
         # 预测
         y_hat = net(X)
+        y_hat=X+y_hat
         # 计算损失
-        l = loss(y_hat, y)
+        l = loss(y_hat, y-X)
         # 记录损失和数量
         l_sum += l.cpu().item()
         batch_count += 1
@@ -109,3 +143,25 @@ def eval_with_img(data_iter, net,loss, eval_num=10,device=torch.device(
     
     net.train()
     return l_sum/batch_count
+
+def apply_net(image_path, target_path, net,device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
+    # 应用完整图片并写入
+    X=Image.open(image_path)
+    X = np.asarray(X,np.float32)
+    X = X.transpose((2,0,1))
+    X=torch.tensor(X)
+    X=X.unsqueeze(0)
+    net.eval()
+    net = net.to(device)
+    X=X.to(device)
+    y_hat = net(X)
+    y_hat=X+y_hat
+    y_hat=y_hat.to('cpu')
+    y_hat=y_hat.squeeze(0)
+    y_hat=y_hat.detach().numpy()
+    y_hat = np.transpose(y_hat, (1, 2, 0))
+    y_hat = y_hat.astype(np.uint8)
+    plt.imshow(y_hat)
+    plt.show()
+    Image.fromarray(y_hat).save(target_path)
+    print('Saved: '+target_path)

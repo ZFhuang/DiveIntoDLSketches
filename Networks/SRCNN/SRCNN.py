@@ -1,7 +1,7 @@
 import torch
 from torch import nn, optim
 
-# SRCNN, 最早的超分辨率卷积神经网络
+# SRCNN, 最早的超分辨率卷积神经网络, 2014
 class SRCNN(nn.Module):
     def __init__(self):
         super(SRCNN, self).__init__()

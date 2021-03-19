@@ -90,3 +90,24 @@ def random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Label
             file_name=files[i]
             shutil.move(os.path.join(Inputs_folder_train,file_name), os.path.join(Inputs_folder_test,file_name))
             shutil.move(os.path.join(Labels_folder_train,file_name), os.path.join(Labels_folder_test,file_name))
+
+def apply_net(image_path, target_path, net,device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
+    # 应用完整图片并写入
+    X=Image.open(image_path)
+    X = np.asarray(X,np.float32)
+    X = X.transpose((2,0,1))
+    X=torch.tensor(X)
+    X=X.unsqueeze(0)
+    net.eval()
+    net = net.to(device)
+    X=X.to(device)
+    y_hat = net(X)
+    y_hat=y_hat.to('cpu')
+    y_hat=y_hat.squeeze(0)
+    y_hat=y_hat.detach().numpy()
+    y_hat = np.transpose(y_hat, (1, 2, 0))
+    y_hat = y_hat.astype(np.uint8)
+    plt.imshow(y_hat)
+    plt.show()
+    Image.fromarray(y_hat).save(target_path)
+    print('Saved: '+target_path)
