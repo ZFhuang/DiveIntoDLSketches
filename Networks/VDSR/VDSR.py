@@ -49,6 +49,8 @@ def train(train_iter, test_iter, net, loss, optimizer, num_epochs,scheduler,prin
             # 读取数据对
             X = X.to(device)
             y = y.to(device)
+            X=X.unsqueeze(1)
+            y=y.unsqueeze(1)
             # 预测
             y_hat = net(X)
             # 计算损失

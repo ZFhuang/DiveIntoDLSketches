@@ -7,9 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import DataLoader
 from PIL import Image
-from Utils.data_process import ImagePairDataset, sample_images,cut_images,random_move,init_folder,align_images
-from Utils.core import train,eval_with_img,eval
-from SRCNN import SRCNN
+from Utils.data_process import ImagePairDataset_y, sample_images,cut_images,random_move,init_folder,align_images
+from SRCNN import SRCNN,train,eval,apply_net
 
 # 初始化路径
 root_folder=r'./Datasets/T91/'
@@ -35,7 +34,8 @@ init_folder(Labels_folder_test)
 # 采样并复制图像
 sample_images(Raw_folder, LR_folder,0.5)
 sample_images(Raw_folder, HR_folder,1)
-align_images(LR_folder, HR_folder, Inputs_folder_train)
+align_images(LR_folder, HR_folder, LR_folder)
+sample_images(LR_folder, Inputs_folder_train,1)
 sample_images(HR_folder, Labels_folder_train,1)
 
 # 然后将图像分割
@@ -54,22 +54,22 @@ optim=torch.optim.Adam(net.parameters(),lr=lr)
 loss = torch.nn.MSELoss()
 
 # 读取数据集
-train_dataset=ImagePairDataset(Inputs_folder_train,Labels_folder_train)
-test_dataset=ImagePairDataset(Inputs_folder_test,Labels_folder_test)
+train_dataset=ImagePairDataset_y(Inputs_folder_train,Labels_folder_train)
+test_dataset=ImagePairDataset_y(Inputs_folder_test,Labels_folder_test)
 train_iter = DataLoader(train_dataset, batch_size, shuffle=True)
 test_iter = DataLoader(test_dataset, 1, shuffle=True)
 
-# 训练
-train(train_iter, test_iter, net, loss, optim, num_epochs)
+# # # 训练
+# # train(train_iter, test_iter, net, loss, optim, num_epochs)
 
-# # 测试
-# print('full test loss %.4f'%eval(test_iter,net,loss,0))
+# # # 测试
+# # print('full test loss %.4f'%eval(test_iter,net,loss,0))
 
-# # 保存网络
-# torch.save(net.state_dict(), MODEL_PATH)
+# # # 保存网络
+# # torch.save(net.state_dict(), MODEL_PATH)
 
 # 读取网络
 net.load_state_dict(torch.load(MODEL_PATH))
 
 # 应用完整图片并写入
-output=apply_net(LR_folder+r'/2.png', Outputs_folder+r'/1.png',net)
+output=apply_net(LR_folder+r'/img_2.png', Outputs_folder+r'/img_2_out.png',net)

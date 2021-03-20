@@ -9,7 +9,7 @@ import random
 import cv2
 from torch.utils.data import Dataset
 
-class ImagePairDataset(Dataset):
+class ImagePairDataset_y(Dataset):
     # from: https://blog.csdn.net/tuiqdymy/article/details/84779716
     # 数据集需要保存在Inputs和Labels文件夹中
 
@@ -36,16 +36,19 @@ class ImagePairDataset(Dataset):
         # 被DataLoader以下标调用
         datafiles = self.files[index]
         # 得到路径并读取图片
-        image = Image.open(datafiles["img"])
-        label = Image.open(datafiles["label"])
-        I = np.asarray(image,np.float32)
-        I = I.transpose((2,0,1))
-        L = np.asarray(label,np.float32)
-        L = L.transpose((2,0,1))
+        X = cv2.imread(datafiles["img"]).astype(np.float32)
+        X = cv2.normalize(X,  X, 0, 1, cv2.NORM_MINMAX)
+        X = cv2.cvtColor(X, cv2.COLOR_BGR2YCrCb)
+        X_y = X[:,:,0]
+        y = cv2.imread(datafiles["label"]).astype(np.float32)
+        y = cv2.normalize(y,  y, 0, 1, cv2.NORM_MINMAX)
+        y = cv2.cvtColor(y, cv2.COLOR_BGR2YCrCb)
+        y_y = y[:,:,0]
         # 返回对应的读取信息
-        return I.copy(), L.copy()
+        return X_y.copy(), y_y.copy()
 
 def init_folder(folder):
+    # 初始化所需的文件夹
     if not os.path.exists(folder):
         os.makedirs(folder)
         print("Alloc folder: "+folder)
@@ -55,6 +58,7 @@ def init_folder(folder):
         print("Reinit folder: "+folder)
     
 def sample_images(folder, target_folder,size,method=cv2.INTER_NEAREST):
+    # 采样并保存图像
     for _,_,files in os.walk(folder):
         idx=0
         for file in files:
@@ -62,19 +66,19 @@ def sample_images(folder, target_folder,size,method=cv2.INTER_NEAREST):
             if size!=1:
                 image=cv2.resize(image, None, fx=size, fy=size, interpolation=method)
                 print(os.path.join(folder,file)+' is sampled!')
+            # 重命名
             cv2.imwrite(target_folder+'/'+'img_'+str(idx)+'.png',image)
             idx+=1
 
 def align_images(LR_folder,HR_folder, target_folder,method=cv2.INTER_CUBIC):
+    # 对齐图像大小
     for _,_,files in os.walk(LR_folder):
-        idx=0
         for file in files:
             image =cv2.imread(os.path.join(LR_folder,file))
             target_image =cv2.imread(os.path.join(HR_folder,file))
             image=cv2.resize(image, (target_image.shape[1],target_image.shape[0]), interpolation=method)
             print(os.path.join(LR_folder,file)+' is alingned!')
-            cv2.imwrite(target_folder+'/'+'img_'+str(idx)+'.png',image)
-            idx+=1
+            cv2.imwrite(target_folder+'/'+file,image)
 
 def cut_images(folder, size, stride):
     # 批量裁剪图像
@@ -126,3 +130,26 @@ def apply_net(image_path, target_path, net,device=torch.device('cuda' if torch.c
     plt.show()
     Image.fromarray(y_hat).save(target_path)
     print('Saved: '+target_path)
+
+def yCbCr2rgb(input_im):
+    # y转rgb
+    im_flat = input_im.contiguous().view(-1, 3).float()
+    mat = torch.tensor([[1.164, 1.164, 1.164],
+                       [0, -0.392, 2.017],
+                       [1.596, -0.813, 0]])
+    bias = torch.tensor([-16.0/255.0, -128.0/255.0, -128.0/255.0])
+    temp = (im_flat + bias).mm(mat)
+    out = temp.view(3, list(input_im.size())[1], list(input_im.size())[2])
+    return out
+ 
+def rgb2yCbCr(input_im):
+    # rgb转y
+    im_flat = input_im.contiguous().view(-1, 3).float()
+    mat = torch.tensor([[0.257, -0.148, 0.439],
+                        [0.564, -0.291, -0.368],
+                        [0.098, 0.439, -0.071]]).to('cuda')
+    bias = torch.tensor([16.0/255.0, 128.0/255.0, 128.0/255.0])
+    bias=bias.to('cuda')
+    temp = im_flat.mm(mat) + bias
+    out = temp.view(3, input_im.shape[1], input_im.shape[2])
+    return out

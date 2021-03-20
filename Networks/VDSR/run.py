@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import DataLoader
 from PIL import Image
-from Utils.data_process import ImagePairDataset, sample_images,cut_images,random_move,init_folder,align_images
+from Utils.data_process import ImagePairDataset_y, sample_images,cut_images,random_move,init_folder,align_images
 from VDSR import VDSR, train, eval, apply_net
 
 # 初始化路径
@@ -65,8 +65,8 @@ scheduler = torch.optim.lr_scheduler.StepLR(my_optim,step_size=20,gamma = 0.1)
 loss = torch.nn.MSELoss()
 
 # 读取数据集
-train_dataset=ImagePairDataset(Inputs_folder_train,Labels_folder_train)
-test_dataset=ImagePairDataset(Inputs_folder_test,Labels_folder_test)
+train_dataset=ImagePairDataset_y(Inputs_folder_train,Labels_folder_train)
+test_dataset=ImagePairDataset_y(Inputs_folder_test,Labels_folder_test)
 train_iter = DataLoader(train_dataset, batch_size, shuffle=True)
 test_iter = DataLoader(test_dataset, 1, shuffle=True)
 
