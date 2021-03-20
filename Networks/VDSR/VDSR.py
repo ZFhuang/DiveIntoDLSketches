@@ -32,12 +32,12 @@ class VDSR_Block(nn.Module):
         self.out=nn.Conv2d(64,3,3,padding=1)
     
     def forward(self, img):
-        img=self.inp(img)
+        img=torch.relu(self.inp(img))
         img=self.conv(img)
         img=self.out(img)
         return img
 
-def train(train_iter, test_iter, net, loss, optimizer, num_epochs,print_epochs_gap=10, device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
+def train(train_iter, test_iter, net, loss, optimizer, num_epochs,scheduler,print_epochs_gap=10, device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
     net.train()
     net = net.to(device)
     print("Training on ", str(device))
@@ -57,7 +57,7 @@ def train(train_iter, test_iter, net, loss, optimizer, num_epochs,print_epochs_g
             optimizer.zero_grad()
             l.backward()
             # 梯度裁剪
-            # nn.utils.clip_grad_norm_(net.parameters(), max_norm=1, norm_type=2)
+            nn.utils.clip_grad_value_(net.parameters(), 1/optimizer.param_groups[0]['lr'])
             optimizer.step()
             # 记录损失和数量
             train_l_sum += l.cpu().item()
@@ -67,29 +67,31 @@ def train(train_iter, test_iter, net, loss, optimizer, num_epochs,print_epochs_g
             print('epoch %d, train loss %.4f, test loss %.4f, time %.1f sec' % (
             epoch + 1, train_l_sum / batch_count,eval(test_iter,net,loss), time.time() - start))
             train_l_sum,start,batch_count =  0.0, time.time(),0
+        scheduler.step()
     print("Train in %.1f sec"% (time.time() - train_start))
 
 def eval(data_iter, net,loss, eval_num=3,device=torch.device(
         'cuda' if torch.cuda.is_available() else 'cpu')):
     # 在指定的数据集上测试, eval_num=0时完全测试
-    net.eval()
-    net = net.to(device)
-    l_sum,batch_count =  0.0,0
-    for X, y in data_iter:
-        # 读取数据对
-        X = X.to(device)
-        y = y.to(device)
-        # 预测
-        y_hat = net(X)
-        # 计算损失
-        l = loss(y_hat, y-X)
-        # 记录损失和数量
-        l_sum += l.cpu().item()
-        batch_count += 1
-        if eval_num!=0 and batch_count>=eval_num:
-            break
-    net.train()
-    return l_sum/batch_count
+    with torch.no_grad():
+        net.eval()
+        net = net.to(device)
+        l_sum,batch_count =  0.0,0
+        for X, y in data_iter:
+            # 读取数据对
+            X = X.to(device)
+            y = y.to(device)
+            # 预测
+            y_hat = net(X)
+            # 计算损失
+            l = loss(y_hat, y-X)
+            # 记录损失和数量
+            l_sum += l.cpu().item()
+            batch_count += 1
+            if eval_num!=0 and batch_count>=eval_num:
+                break
+        net.train()
+        return l_sum/batch_count
 
 def eval_with_img(data_iter, net,loss, eval_num=10,device=torch.device(
         'cuda' if torch.cuda.is_available() else 'cpu')):

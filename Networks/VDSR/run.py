@@ -2,6 +2,7 @@ import sys
 sys.path.append(r'C:\Work\DiveIntoDLSketches')
 
 import torch
+import torch.nn as nn
 from torchvision import transforms
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,31 +23,45 @@ Inputs_folder_test=root_folder+r'Inputs_test'
 Labels_folder_test=root_folder+r'Labels_test'
 MODEL_PATH = r'Models/VDSR.pth'
 
-# 初始化数据集文件夹
-init_folder(Inputs_folder_train)
-init_folder(Labels_folder_train)
-init_folder(Inputs_folder_test)
-init_folder(Labels_folder_test)
+# # 初始化数据集文件夹
+# init_folder(LR_folder)
+# init_folder(HR_folder)
+# init_folder(Outputs_folder)
+# init_folder(Inputs_folder_train)
+# init_folder(Labels_folder_train)
+# init_folder(Inputs_folder_test)
+# init_folder(Labels_folder_test)
 
-# 采样并复制图像
-sample_images(Raw_folder, LR_folder,0.5)
-sample_images(Raw_folder, HR_folder,1)
-align_images(LR_folder, HR_folder, Inputs_folder_train)
-sample_images(HR_folder, Labels_folder_train,1)
+# # 采样并复制图像
+# sample_images(Raw_folder, LR_folder,0.5)
+# sample_images(Raw_folder, HR_folder,1)
+# align_images(LR_folder, HR_folder, Inputs_folder_train)
+# sample_images(HR_folder, Labels_folder_train,1)
 
-# 然后将图像分割
-size=41
-cut_images(Inputs_folder_train, size, size//1)
-cut_images(Labels_folder_train, size, size//1)
+# # 然后将图像分割
+# size=41
+# cut_images(Inputs_folder_train, size, size//1)
+# cut_images(Labels_folder_train, size, size//1)
 
-# 随机分配文件到测试集中
-random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Labels_folder_test,0.1)
+# # 随机分配文件到测试集中
+# random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Labels_folder_test,0.01)
 
 # 设置训练参数
 net=VDSR()
-lr, num_epochs = 0.1, 80
+
+def weights_init(m):
+    if isinstance(m, nn.Conv2d):
+        torch.nn.init.xavier_uniform_(m.weight)
+        if m.bias is not None:
+            torch.nn.init.zeros_(m.bias)
+
+net.apply(weights_init)
+
+lr, num_epochs = 0.01, 80
 batch_size = 64
-optim=torch.optim.Adam(net.parameters(),lr=lr)
+my_optim=torch.optim.Adam(net.parameters(),lr=lr)
+scheduler = torch.optim.lr_scheduler.StepLR(my_optim,step_size=20,gamma = 0.1)
+
 loss = torch.nn.MSELoss()
 
 # 读取数据集
@@ -56,7 +71,7 @@ train_iter = DataLoader(train_dataset, batch_size, shuffle=True)
 test_iter = DataLoader(test_dataset, 1, shuffle=True)
 
 # 训练
-train(train_iter, test_iter, net, loss, optim, num_epochs)
+train(train_iter, test_iter, net, loss, my_optim, num_epochs,scheduler)
 
 # 测试
 print('full test loss %.4f'%eval(test_iter,net,loss,0))
@@ -68,4 +83,4 @@ torch.save(net.state_dict(), MODEL_PATH)
 net.load_state_dict(torch.load(MODEL_PATH))
 
 # 应用完整图片并写入
-output=apply_net(LR_folder+r'/2.png', Outputs_folder+r'/_2.png',net)
+output=apply_net(LR_folder+r'/img_2.png', Outputs_folder+r'/img_2_out.png',net)

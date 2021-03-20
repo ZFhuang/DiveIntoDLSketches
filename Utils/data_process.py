@@ -61,7 +61,7 @@ def sample_images(folder, target_folder,size,method=cv2.INTER_NEAREST):
             image =cv2.imread(os.path.join(folder,file))
             if size!=1:
                 image=cv2.resize(image, None, fx=size, fy=size, interpolation=method)
-                print(os.path.join(folder,file)+' is bicubiced!')
+                print(os.path.join(folder,file)+' is sampled!')
             cv2.imwrite(target_folder+'/'+'img_'+str(idx)+'.png',image)
             idx+=1
 
@@ -72,7 +72,7 @@ def align_images(LR_folder,HR_folder, target_folder,method=cv2.INTER_CUBIC):
             image =cv2.imread(os.path.join(LR_folder,file))
             target_image =cv2.imread(os.path.join(HR_folder,file))
             image=cv2.resize(image, (target_image.shape[1],target_image.shape[0]), interpolation=method)
-            print(os.path.join(LR_folder,file)+' is bicubiced!')
+            print(os.path.join(LR_folder,file)+' is alingned!')
             cv2.imwrite(target_folder+'/'+'img_'+str(idx)+'.png',image)
             idx+=1
 
