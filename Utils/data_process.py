@@ -45,21 +45,36 @@ class ImagePairDataset(Dataset):
         # 返回对应的读取信息
         return I.copy(), L.copy()
 
-def reinit_folder(folder):
-    shutil.rmtree(folder)
-    os.makedirs(folder)
-    print("Reinit folder: "+folder)
+def init_folder(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+        print("Alloc folder: "+folder)
+    else:
+        shutil.rmtree(folder)
+        os.makedirs(folder)
+        print("Reinit folder: "+folder)
     
-def bicubic_images(folder, target_folder,size):
-    # 批量双三次图像
+def sample_images(folder, target_folder,size,method=cv2.INTER_NEAREST):
     for _,_,files in os.walk(folder):
-        # 文件路径
+        idx=0
         for file in files:
             image =cv2.imread(os.path.join(folder,file))
             if size!=1:
-                image=cv2.resize(image, None, fx=size, fy=size, interpolation=cv2.INTER_CUBIC)
+                image=cv2.resize(image, None, fx=size, fy=size, interpolation=method)
                 print(os.path.join(folder,file)+' is bicubiced!')
-            cv2.imwrite(os.path.join(target_folder,file),image)
+            cv2.imwrite(target_folder+'/'+'img_'+str(idx)+'.png',image)
+            idx+=1
+
+def align_images(LR_folder,HR_folder, target_folder,method=cv2.INTER_CUBIC):
+    for _,_,files in os.walk(LR_folder):
+        idx=0
+        for file in files:
+            image =cv2.imread(os.path.join(LR_folder,file))
+            target_image =cv2.imread(os.path.join(HR_folder,file))
+            image=cv2.resize(image, (target_image.shape[1],target_image.shape[0]), interpolation=method)
+            print(os.path.join(LR_folder,file)+' is bicubiced!')
+            cv2.imwrite(target_folder+'/'+'img_'+str(idx)+'.png',image)
+            idx+=1
 
 def cut_images(folder, size, stride):
     # 批量裁剪图像
@@ -88,8 +103,8 @@ def random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Label
         samples=random.sample(range(0,file_num),sample_num)
         for i in samples:
             file_name=files[i]
-            shutil.move(os.path.join(Inputs_folder_train,file_name), os.path.join(Inputs_folder_test,file_name))
-            shutil.move(os.path.join(Labels_folder_train,file_name), os.path.join(Labels_folder_test,file_name))
+            shutil.move(Inputs_folder_train+'/'+file_name,Inputs_folder_test+'/'+file_name)
+            shutil.move(Labels_folder_train+'/'+file_name,Labels_folder_test+'/'+file_name)
 
 def apply_net(image_path, target_path, net,device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
     # 应用完整图片并写入

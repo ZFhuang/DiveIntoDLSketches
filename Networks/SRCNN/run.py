@@ -12,7 +12,7 @@ from Utils.core import train,eval_with_img,eval
 from SRCNN import SRCNN
 
 # 初始化路径
-root_folder=r'./Datasets/Set5/'
+root_folder=r'./Datasets/Set14/'
 LR_folder=root_folder+r'LR'
 HR_folder=root_folder+r'HR'
 Outputs_folder=root_folder+r'Outputs'
@@ -29,7 +29,7 @@ reinit_folder(Inputs_folder_test)
 reinit_folder(Labels_folder_test)
 
 # 采样并复制图像
-bicubic_images(LR_folder, Inputs_folder_train,2)
+bicubic_images(LR_folder, Inputs_folder_train,1)
 bicubic_images(HR_folder, Labels_folder_train,1)
 
 # 然后将图像分割
@@ -53,8 +53,8 @@ test_dataset=ImagePairDataset(Inputs_folder_test,Labels_folder_test)
 train_iter = DataLoader(train_dataset, batch_size, shuffle=True)
 test_iter = DataLoader(test_dataset, 1, shuffle=True)
 
-# # 训练
-# train(train_iter, test_iter, net, loss, optim, num_epochs)
+# 训练
+train(train_iter, test_iter, net, loss, optim, num_epochs)
 
 # # 测试
 # print('full test loss %.4f'%eval(test_iter,net,loss,0))

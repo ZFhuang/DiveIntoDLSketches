@@ -7,11 +7,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import DataLoader
 from PIL import Image
-from Utils.data_process import ImagePairDataset, bicubic_images,cut_images,random_move,reinit_folder
+from Utils.data_process import ImagePairDataset, sample_images,cut_images,random_move,init_folder,align_images
 from VDSR import VDSR, train, eval, apply_net
 
 # 初始化路径
-root_folder=r'./Datasets/Set5/'
+root_folder=r'./Datasets/T91/'
+Raw_folder=root_folder+r'Raw'
 LR_folder=root_folder+r'LR'
 HR_folder=root_folder+r'HR'
 Outputs_folder=root_folder+r'Outputs'
@@ -22,26 +23,28 @@ Labels_folder_test=root_folder+r'Labels_test'
 MODEL_PATH = r'Models/VDSR.pth'
 
 # 初始化数据集文件夹
-reinit_folder(Inputs_folder_train)
-reinit_folder(Labels_folder_train)
-reinit_folder(Inputs_folder_test)
-reinit_folder(Labels_folder_test)
+init_folder(Inputs_folder_train)
+init_folder(Labels_folder_train)
+init_folder(Inputs_folder_test)
+init_folder(Labels_folder_test)
 
 # 采样并复制图像
-bicubic_images(LR_folder, Inputs_folder_train,2)
-bicubic_images(HR_folder, Labels_folder_train,1)
+sample_images(Raw_folder, LR_folder,0.5)
+sample_images(Raw_folder, HR_folder,1)
+align_images(LR_folder, HR_folder, Inputs_folder_train)
+sample_images(HR_folder, Labels_folder_train,1)
 
 # 然后将图像分割
 size=41
-cut_images(Inputs_folder_train, size,size//1)
-cut_images(Labels_folder_train, size,size//1)
+cut_images(Inputs_folder_train, size, size//1)
+cut_images(Labels_folder_train, size, size//1)
 
 # 随机分配文件到测试集中
-random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Labels_folder_test,0.05)
+random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Labels_folder_test,0.1)
 
 # 设置训练参数
 net=VDSR()
-lr, num_epochs = 0.03, 500
+lr, num_epochs = 0.1, 80
 batch_size = 64
 optim=torch.optim.Adam(net.parameters(),lr=lr)
 loss = torch.nn.MSELoss()

@@ -11,32 +11,31 @@ from PIL import Image
 class VDSR(nn.Module):
     def __init__(self):
         super(VDSR, self).__init__()
-        seq=[]
-        for i in range(2):
-            seq.append(VDSR_Block())
-        self.loop=nn.Sequential(*seq)
+        self.body=VDSR_Block()
     
-    def forward(self, res):
-        res=self.loop(res)
-        return res
-
+    def forward(self, img):
+        img=self.body(img)
+        for i in range(img.shape[0]):
+            for j in range(3):
+                img[i,j,:,:]-=torch.mean(img[i,j,:,:])
+        return img
+        
 class VDSR_Block(nn.Module):
     def __init__(self):
         super(VDSR_Block, self).__init__()
-        self.inp=nn.Conv2d(3,64,3,padding=1)
+        self.inp=nn.Conv2d(3,64,3,bias=False,padding=1)
         seq=[]
-        for j in range(62):
+        for j in range(20):
             seq.append(nn.Conv2d(64,64,3,padding=1))
-            seq.append(nn.ReLU())
+            seq.append(nn.ReLU(True))
         self.conv=nn.Sequential(*seq)
         self.out=nn.Conv2d(64,3,3,padding=1)
     
     def forward(self, img):
-        res=img
-        res=self.inp(res)
-        res=torch.sigmoid(self.conv(res))
-        res=self.out(res)
-        return res+img
+        img=self.inp(img)
+        img=self.conv(img)
+        img=self.out(img)
+        return img
 
 def train(train_iter, test_iter, net, loss, optimizer, num_epochs,print_epochs_gap=10, device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
     net.train()
@@ -104,7 +103,6 @@ def eval_with_img(data_iter, net,loss, eval_num=10,device=torch.device(
         y = y.to(device)
         # 预测
         y_hat = net(X)
-        y_hat=X+y_hat
         # 计算损失
         l = loss(y_hat, y-X)
         # 记录损失和数量
@@ -132,6 +130,7 @@ def eval_with_img(data_iter, net,loss, eval_num=10,device=torch.device(
         plt.imshow(X)
         plt.show()
 
+        y_hat=y_hat+X
         y_hat=y_hat.to('cpu')
         y_hat=y_hat.squeeze(0)
         y_hat=y_hat.detach().numpy()
@@ -155,7 +154,7 @@ def apply_net(image_path, target_path, net,device=torch.device('cuda' if torch.c
     net = net.to(device)
     X=X.to(device)
     y_hat = net(X)
-    y_hat=X+y_hat
+    y_hat=y_hat+X
     y_hat=y_hat.to('cpu')
     y_hat=y_hat.squeeze(0)
     y_hat=y_hat.detach().numpy()
