@@ -14,7 +14,7 @@ class ImagePairDataset_y(Dataset):
     # 数据集需要保存在Inputs和Labels文件夹中
 
     def __init__(self, inputs_folder, labels_folder):
-        super(ImagePairDataset,self).__init__()
+        super(ImagePairDataset_y,self).__init__()
         # 用来保存数据集的路径集合
         self.files = []
         for _,_,files in os.walk(inputs_folder):

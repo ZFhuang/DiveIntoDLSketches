@@ -12,7 +12,7 @@ from Utils.data_process import ImagePairDataset_y, sample_images,cut_images,rand
 from VDSR import VDSR, train, eval, apply_net
 
 # 初始化路径
-root_folder=r'./Datasets/T91/'
+root_folder=r'./Datasets/Set5/'
 Raw_folder=root_folder+r'Raw'
 LR_folder=root_folder+r'LR'
 HR_folder=root_folder+r'HR'
@@ -35,7 +35,8 @@ MODEL_PATH = r'Models/VDSR.pth'
 # # 采样并复制图像
 # sample_images(Raw_folder, LR_folder,0.5)
 # sample_images(Raw_folder, HR_folder,1)
-# align_images(LR_folder, HR_folder, Inputs_folder_train)
+# align_images(LR_folder, HR_folder, LR_folder)
+# sample_images(LR_folder, Inputs_folder_train,1)
 # sample_images(HR_folder, Labels_folder_train,1)
 
 # # 然后将图像分割
@@ -44,11 +45,12 @@ MODEL_PATH = r'Models/VDSR.pth'
 # cut_images(Labels_folder_train, size, size//1)
 
 # # 随机分配文件到测试集中
-# random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Labels_folder_test,0.01)
+# random_move(Inputs_folder_train,Labels_folder_train,Inputs_folder_test,Labels_folder_test,0.05)
 
 # 设置训练参数
 net=VDSR()
 
+# 初始化网络参数
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
         torch.nn.init.xavier_uniform_(m.weight)
@@ -57,9 +59,10 @@ def weights_init(m):
 
 net.apply(weights_init)
 
-lr, num_epochs = 0.01, 80
+lr, num_epochs = 0.1, 40
 batch_size = 64
-my_optim=torch.optim.Adam(net.parameters(),lr=lr)
+my_optim=torch.optim.SGD(net.parameters(),lr=lr,momentum=0.9,weight_decay=0.0001)
+# 自适应学习率
 scheduler = torch.optim.lr_scheduler.StepLR(my_optim,step_size=20,gamma = 0.1)
 
 loss = torch.nn.MSELoss()
@@ -69,12 +72,13 @@ train_dataset=ImagePairDataset_y(Inputs_folder_train,Labels_folder_train)
 test_dataset=ImagePairDataset_y(Inputs_folder_test,Labels_folder_test)
 train_iter = DataLoader(train_dataset, batch_size, shuffle=True)
 test_iter = DataLoader(test_dataset, 1, shuffle=True)
+print('Datasets loaded!')
 
 # 训练
 train(train_iter, test_iter, net, loss, my_optim, num_epochs,scheduler)
 
 # 测试
-print('full test loss %.4f'%eval(test_iter,net,loss,0))
+print('Full test loss %.4f'%eval(test_iter,net,loss,0))
 
 # 保存网络
 torch.save(net.state_dict(), MODEL_PATH)
@@ -83,4 +87,4 @@ torch.save(net.state_dict(), MODEL_PATH)
 net.load_state_dict(torch.load(MODEL_PATH))
 
 # 应用完整图片并写入
-output=apply_net(LR_folder+r'/img_2.png', Outputs_folder+r'/img_2_out.png',net)
+output=apply_net(LR_folder+r'/img_1.png', Outputs_folder+r'/img_1_out.png',net)

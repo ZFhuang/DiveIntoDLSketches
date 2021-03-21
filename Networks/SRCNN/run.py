@@ -34,7 +34,7 @@ init_folder(Labels_folder_test)
 # 采样并复制图像
 sample_images(Raw_folder, LR_folder,0.5)
 sample_images(Raw_folder, HR_folder,1)
-align_images(LR_folder, HR_folder, LR_folder)
+align_images(LR_folder, HR_folder, LR_folder,method=cv2.INTER_NEAREST)
 sample_images(LR_folder, Inputs_folder_train,1)
 sample_images(HR_folder, Labels_folder_train,1)
 

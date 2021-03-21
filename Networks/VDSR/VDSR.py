@@ -5,6 +5,7 @@ import cv2
 from matplotlib import pyplot as plt
 import numpy as np
 from PIL import Image
+from torch.utils.tensorboard import SummaryWriter
 
 # VDSR, 应用了残差网络达成深度学习, 改进的SRCNN, 2016
 # 思路接近VGG11
@@ -16,20 +17,19 @@ class VDSR(nn.Module):
     def forward(self, img):
         img=self.body(img)
         for i in range(img.shape[0]):
-            for j in range(3):
-                img[i,j,:,:]-=torch.mean(img[i,j,:,:])
+            img[i,0,:,:]-=torch.mean(img[i,0,:,:])
         return img
         
 class VDSR_Block(nn.Module):
     def __init__(self):
         super(VDSR_Block, self).__init__()
-        self.inp=nn.Conv2d(3,64,3,bias=False,padding=1)
+        self.inp=nn.Conv2d(1,64,3,bias=False,padding=1)
         seq=[]
         for j in range(20):
             seq.append(nn.Conv2d(64,64,3,padding=1))
             seq.append(nn.ReLU(True))
         self.conv=nn.Sequential(*seq)
-        self.out=nn.Conv2d(64,3,3,padding=1)
+        self.out=nn.Conv2d(64,1,3,padding=1)
     
     def forward(self, img):
         img=torch.relu(self.inp(img))
@@ -44,6 +44,8 @@ def train(train_iter, test_iter, net, loss, optimizer, num_epochs,scheduler,prin
     # 记录开始时间
     train_start=time.time()
     train_l_sum,start,batch_count =  0.0, time.time(),0
+    # 初始化写入器
+    writer = SummaryWriter()
     for epoch in range(num_epochs):
         for X, y in train_iter:
             # 读取数据对
@@ -62,17 +64,23 @@ def train(train_iter, test_iter, net, loss, optimizer, num_epochs,scheduler,prin
             nn.utils.clip_grad_value_(net.parameters(), 1/optimizer.param_groups[0]['lr'])
             optimizer.step()
             # 记录损失和数量
-            train_l_sum += l.cpu().item()
+            train_l_sum += l.item()
             batch_count += 1
+    
+        # 每个epoch记录一次当前train_loss
+        writer.add_scalar('loss/train', train_l_sum / batch_count, epoch)
+
         # 每隔一段epochs就计算并输出一次loss
         if epoch%print_epochs_gap==0:
+            test_loss=eval(test_iter,net,loss)
             print('epoch %d, train loss %.4f, test loss %.4f, time %.1f sec' % (
-            epoch + 1, train_l_sum / batch_count,eval(test_iter,net,loss), time.time() - start))
+            epoch + 1, train_l_sum / batch_count,test_loss, time.time() - start))
+            writer.add_scalar('loss/test', test_loss, epoch)
             train_l_sum,start,batch_count =  0.0, time.time(),0
         scheduler.step()
     print("Train in %.1f sec"% (time.time() - train_start))
 
-def eval(data_iter, net,loss, eval_num=3,device=torch.device(
+def eval(data_iter, net,loss, eval_num=10,device=torch.device(
         'cuda' if torch.cuda.is_available() else 'cpu')):
     # 在指定的数据集上测试, eval_num=0时完全测试
     with torch.no_grad():
@@ -83,6 +91,8 @@ def eval(data_iter, net,loss, eval_num=3,device=torch.device(
             # 读取数据对
             X = X.to(device)
             y = y.to(device)
+            X=X.unsqueeze(1)
+            y=y.unsqueeze(1)
             # 预测
             y_hat = net(X)
             # 计算损失
@@ -95,76 +105,27 @@ def eval(data_iter, net,loss, eval_num=3,device=torch.device(
         net.train()
         return l_sum/batch_count
 
-def eval_with_img(data_iter, net,loss, eval_num=10,device=torch.device(
-        'cuda' if torch.cuda.is_available() else 'cpu')):
-    # 在指定的数据集上测试并绘制每个测试的数据对
-    net.eval()
-    net = net.to(device)
-    l_sum,batch_count =  0.0,0
-    for X, y in data_iter:
-        # 读取数据对
-        X = X.to(device)
-        y = y.to(device)
-        # 预测
-        y_hat = net(X)
-        # 计算损失
-        l = loss(y_hat, y-X)
-        # 记录损失和数量
-        l_sum += l.cpu().item()
-        batch_count += 1
-        if eval_num!=0 and batch_count>=eval_num:
-            break
-
-        # 显示此迭代中的LR, HR, OUT
-        X=X.to('cpu')
-        X=X.squeeze(0)
-        X=X.detach().numpy()
-        # X=X[0,:,:]
-        X = np.transpose(X, (1, 2, 0))
-        X = X.astype(np.uint8)    
-        plt.imshow(X)
-        plt.show()
-
-        y=y.to('cpu')
-        y=y.squeeze(0)
-        y=y.detach().numpy()
-        # y=y[0,:,:]
-        y = np.transpose(y, (1, 2, 0))
-        y = y.astype(np.uint8)    
-        plt.imshow(X)
-        plt.show()
-
-        y_hat=y_hat+X
-        y_hat=y_hat.to('cpu')
-        y_hat=y_hat.squeeze(0)
-        y_hat=y_hat.detach().numpy()
-        # y_hat=y_hat[0,:,:]
-        y_hat = np.transpose(y_hat, (1, 2, 0))
-        y_hat = y_hat.astype(np.uint8)    
-        plt.imshow(X)
-        plt.show()
-    
-    net.train()
-    return l_sum/batch_count
-
 def apply_net(image_path, target_path, net,device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
     # 应用完整图片并写入
-    X=Image.open(image_path)
-    X = np.asarray(X,np.float32)
-    X = X.transpose((2,0,1))
-    X=torch.tensor(X)
-    X=X.unsqueeze(0)
-    net.eval()
+    X=cv2.imread(image_path).astype(np.float32)
+    X = cv2.normalize(X,  X, 0, 1, cv2.NORM_MINMAX)
+    X = cv2.cvtColor(X, cv2.COLOR_BGR2YCrCb)
+    X_y = X[:,:,0]
+    X_y=torch.tensor(X_y)
+    X_y=X_y.unsqueeze(0)
+    X_y=X_y.unsqueeze(1)
     net = net.to(device)
-    X=X.to(device)
-    y_hat = net(X)
-    y_hat=y_hat+X
-    y_hat=y_hat.to('cpu')
-    y_hat=y_hat.squeeze(0)
-    y_hat=y_hat.detach().numpy()
-    y_hat = np.transpose(y_hat, (1, 2, 0))
-    y_hat = y_hat.astype(np.uint8)
-    plt.imshow(y_hat)
+    X_y=X_y.to(device)
+    # 预测
+    y_hat_y=net(X_y)
+    y_hat_y+=X_y
+    y_hat_y=y_hat_y.to('cpu')
+    y_hat_y=y_hat_y.detach().numpy()
+    y_hat=X
+    y_hat[:,:,0]=y_hat_y[0,0,:,:]
+    y_hat = cv2.cvtColor(y_hat, cv2.COLOR_YCrCb2RGB)
+    y_hat = np.clip(y_hat, 0, 1)
+    plt.imshow(y_hat.astype('float32'))
     plt.show()
-    Image.fromarray(y_hat).save(target_path)
+    Image.fromarray((y_hat*255).astype(np.uint8)).save(target_path)
     print('Saved: '+target_path)

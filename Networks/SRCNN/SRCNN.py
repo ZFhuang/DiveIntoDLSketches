@@ -9,6 +9,7 @@ import cv2
 from Utils.data_process import yCbCr2rgb, rgb2yCbCr
 import numpy as np
 from PIL import Image
+from torch.utils.tensorboard import SummaryWriter
 
 # SRCNN, 最早的超分辨率卷积神经网络, 2014
 class SRCNN(nn.Module):
@@ -32,6 +33,7 @@ class SRCNN(nn.Module):
 def train(train_iter, test_iter, net, loss, optimizer, num_epochs,print_epochs_gap=10, device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
     net.train()
     net = net.to(device)
+    writer = SummaryWriter()
     print("Training on ", str(device))
     # 记录开始时间
     train_start=time.time()
