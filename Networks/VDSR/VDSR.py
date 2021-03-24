@@ -77,6 +77,7 @@ def train(train_iter, test_iter, net, loss, optimizer, num_epochs,scheduler,prin
             epoch + 1, train_l_sum / batch_count,test_loss, time.time() - start))
             writer.add_scalar('loss/test', test_loss, epoch)
             train_l_sum,start,batch_count =  0.0, time.time(),0
+        # 更新学习率
         scheduler.step()
     print("Train in %.1f sec"% (time.time() - train_start))
 
@@ -125,7 +126,7 @@ def apply_net(image_path, target_path, net,device=torch.device('cuda' if torch.c
     y_hat[:,:,0]=y_hat_y[0,0,:,:]
     y_hat = cv2.cvtColor(y_hat, cv2.COLOR_YCrCb2RGB)
     y_hat = np.clip(y_hat, 0, 1)
-    plt.imshow(y_hat.astype('float32'))
-    plt.show()
+    # plt.imshow(y_hat.astype('float32'))
+    # plt.show()
     Image.fromarray((y_hat*255).astype(np.uint8)).save(target_path)
     print('Saved: '+target_path)
