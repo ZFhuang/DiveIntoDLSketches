@@ -1,8 +1,6 @@
 # from: https://github.com/bonlime/pytorch-tools/blob/master/pytorch_tools/metrics/psnr.py
 
-import os
-import sys
-import math
+import logging
 import torch
 import numpy as np
 import cv2
@@ -72,7 +70,7 @@ def img_metric(target_path, label_path):
     img_target=cv2.imread(target_path).astype(np.float32)
     img_label=cv2.imread(label_path).astype(np.float32)
     img_label=cv2.resize(img_label, (img_target.shape[1],img_target.shape[0]), interpolation=cv2.INTER_LINEAR)
-    print(target_path+' SSIM is: '+str(SSIM._ssim(img_target,img_label)))
+    logging.info(target_path+' SSIM is: '+str(SSIM._ssim(img_target,img_label)))
     img_target = torch.from_numpy(img_target.transpose((2, 0, 1)))
     img_label = torch.from_numpy(img_label.transpose((2, 0, 1)))
-    print(target_path+' PSNR is: '+str((PSNR.__call__(img_target,img_label)).item()))
+    logging.info(target_path+' PSNR is: '+str((PSNR.__call__(img_target,img_label)).item()))
