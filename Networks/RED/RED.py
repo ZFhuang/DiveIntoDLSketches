@@ -35,7 +35,7 @@ class RED(nn.Module):
             ))
         self.deconvs=nn.Sequential(*deconv_seq)
         # 真正的放大步骤
-        self.output_conv = nn.ConvTranspose2d(num_feature, 1, 3,stride=ratio,padding=filter_size//2)
+        self.output_conv = nn.ConvTranspose2d(num_feature, 1, 3,stride=ratio,padding=1)
 
     def forward(self, img):
         img = self.input_conv(img)

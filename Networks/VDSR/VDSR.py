@@ -61,7 +61,7 @@ def train(train_iter, test_iter, net, loss, optimizer, num_epochs,scheduler,prin
             optimizer.zero_grad()
             l.backward()
             # 梯度裁剪
-            nn.utils.clip_grad_value_(net.parameters(), 1/optimizer.param_groups[0]['lr'])
+            nn.utils.clip_grad_value_(net.parameters(), 0.01/optimizer.param_groups[0]['lr'])
             optimizer.step()
             # 记录损失和数量
             train_l_sum += l.item()

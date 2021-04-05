@@ -12,16 +12,15 @@ dataPath = os.path.split(rootPath)[0]
 dataPath = os.path.split(dataPath)[0]
 print('Data path: '+dataPath)
 
+# 设置Cuda
 os.environ['CUDA_VISIBLE_DEVICES'] = '0, 7'
 
 from Utils.data_process import ImagePairDataset_y, sample_images, cut_images, random_move, init_folder, crop_images, expand_dataset, align_images
-from Utils.core import train, eval, apply_net_preupsample
+from Utils.core import train, eval, weights_init_kaiming, apply_net_preupsample
 import getpass
 from Utils.metrics import img_metric
-from DRCN import DRCN
-from PIL import Image
+from DRRN import DRRN
 from torch.utils.data import DataLoader
-import numpy as np
 import time
 import torch
 
@@ -37,65 +36,56 @@ LABELS_FOLDER_TRAIN = ROOT_FOLDER+r'Labels_train'
 INPUTS_FOLDER_TEST = ROOT_FOLDER+r'Inputs_test'
 LABELS_FOLDER_TEST = ROOT_FOLDER+r'Labels_test'
 format_time = str(time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime()))
+print('Start in: '+format_time)
 computer_name = getpass.getuser()
-SAVE_PATH = rootPath+r'/Models/DRCN_'+computer_name+r'_'+format_time+r'.pth'
-LOAD_PATH = rootPath+r'/Models/DRCN_ZFH_2021-03-27_16-35-58.pth '
+SAVE_PATH = rootPath+r'/Models/DRRN_'+computer_name+r'_'+format_time+r'.pth'
+LOAD_PATH = rootPath+r'/Models/DRRN_ZFH_2021-03-27_16-35-58.pth '
 
 # 数据参数
 ratio = 2
-LR_size = 41
+LR_size = 31
 # init_folder(OUTPUTS_FOLDER)
 
-# 初始化数据集文件夹
-init_folder(TEMP_FOLDER)
-init_folder(LR_FOLDER)
-init_folder(HR_FOLDER)
-init_folder(INPUTS_FOLDER_TRAIN)
-init_folder(LABELS_FOLDER_TRAIN)
-init_folder(INPUTS_FOLDER_TEST)
-init_folder(LABELS_FOLDER_TEST)
+# # 初始化数据集文件夹
+# init_folder(TEMP_FOLDER)
+# init_folder(LR_FOLDER)
+# init_folder(HR_FOLDER)
+# init_folder(INPUTS_FOLDER_TRAIN)
+# init_folder(LABELS_FOLDER_TRAIN)
+# init_folder(INPUTS_FOLDER_TEST)
+# init_folder(LABELS_FOLDER_TEST)
 
-# 扩张数据集
-expand_dataset(RAW_FOLDER,TEMP_FOLDER,1,0)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,1,1)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,1,2)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,1,3)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.9,0)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.9,1)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.9,2)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.9,3)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.8,0)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.8,1)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.8,2)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.8,3)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.7,0)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.7,1)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.7,2)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.7,3)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.6,0)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.6,1)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.6,2)
-# expand_dataset(RAW_FOLDER,TEMP_FOLDER,0.6,3)
+# # 扩张数据集
+# expand_dataset(RAW_FOLDER, TEMP_FOLDER, scale=1, rotate=0, flip=0)
+# expand_dataset(RAW_FOLDER, TEMP_FOLDER, scale=1, rotate=1, flip=0)
+# expand_dataset(RAW_FOLDER, TEMP_FOLDER, scale=1, rotate=2, flip=0)
+# expand_dataset(RAW_FOLDER, TEMP_FOLDER, scale=1, rotate=3, flip=0)
+# expand_dataset(RAW_FOLDER, TEMP_FOLDER, scale=1, rotate=0, flip=1)
+# expand_dataset(RAW_FOLDER, TEMP_FOLDER, scale=1, rotate=1, flip=1)
+# expand_dataset(RAW_FOLDER, TEMP_FOLDER, scale=1, rotate=2, flip=1)
+# expand_dataset(RAW_FOLDER, TEMP_FOLDER, scale=1, rotate=3, flip=1)
 
-# 采样并复制图像
-sample_images(TEMP_FOLDER, LR_FOLDER, 1/ratio)
-sample_images(TEMP_FOLDER, HR_FOLDER, 1)
+# # 采样并复制图像
+# sample_images(TEMP_FOLDER, LR_FOLDER, 1/ratio)
+# sample_images(TEMP_FOLDER, HR_FOLDER, 1)
 
-# 移动文件
-align_images(LR_FOLDER,HR_FOLDER, INPUTS_FOLDER_TRAIN)
-sample_images(HR_FOLDER, LABELS_FOLDER_TRAIN,1)
+# # 移动文件
+# align_images(LR_FOLDER, HR_FOLDER, INPUTS_FOLDER_TRAIN)
+# align_images(HR_FOLDER, HR_FOLDER, LABELS_FOLDER_TRAIN)
 
-# 将图像分割
-cut_images(INPUTS_FOLDER_TRAIN,LABELS_FOLDER_TRAIN, LR_size, 1)
+# # 将图像分割
+# cut_images(INPUTS_FOLDER_TRAIN, LABELS_FOLDER_TRAIN, LR_size, 1)
 
-# 随机分配文件到测试集中
-random_move(INPUTS_FOLDER_TRAIN,LABELS_FOLDER_TRAIN,INPUTS_FOLDER_TEST,LABELS_FOLDER_TEST,0.1)
+# # 随机分配文件到测试集中
+# random_move(INPUTS_FOLDER_TRAIN, LABELS_FOLDER_TRAIN,
+#             INPUTS_FOLDER_TEST, LABELS_FOLDER_TEST, 0.1)
 
 # 训练参数
-net = DRCN(16)
+net = DRRN(num_recur_blocks=1, num_resid_units=7, num_filter=32, filter_size=3)
+net.apply(weights_init_kaiming)
 print(net)
-lr, num_epochs = 0.3, 200
-batch_size = 256
+lr, num_epochs = 0.1, 1000
+batch_size = 128
 my_optim = torch.optim.SGD(net.parameters(), lr=lr,
                            momentum=0.9, weight_decay=0.0001)
 # 自适应学习率
@@ -111,7 +101,7 @@ test_iter = DataLoader(test_dataset, 1, shuffle=True)
 print('Datasets loaded!')
 
 # 训练
-train(train_iter, test_iter, net, loss, my_optim, num_epochs, scheduler)
+train(train_iter, test_iter, net, loss, my_optim, num_epochs, scheduler,need_gclip=True)
 
 # 测试
 print('Full test loss %.4f' % eval(test_iter, net, loss, 0))
